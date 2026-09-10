@@ -20,25 +20,30 @@ npm run dev        # http://localhost:5173
 El login es falso: cualquier usuario entra. Todo el estado se reinicia al recargar la página.
 
 ```bash
-npm run check      # tests del dominio (vitest)
-npm run build      # build de producción + service worker
-npm run preview    # sirve el build (única forma de probar la PWA)
+npm run check          # typecheck + lint + formato + tests. Esto es lo que hay que pasar
+npm run test           # 223 pruebas (vitest)
+npm run test:coverage  # con umbrales; falla si la cobertura baja
+npm run build          # build de producción + service worker
+npm run preview        # sirve el build (única forma de probar la PWA)
 ```
+
+Hooks de git (husky): `pre-commit` corre lint y formato, `commit-msg` exige Conventional
+Commits, `pre-push` corre typecheck y la suite completa.
 
 ## Qué hay
 
-| Pantalla | Qué hace |
-| --- | --- |
-| Dashboard | Valor del inventario, bajo mínimo, lotes por caducar, consumo y merma por costo |
-| Inventario | Existencia por insumo, separando botella cerrada de botella de copeo |
+| Pantalla         | Qué hace                                                                          |
+| ---------------- | --------------------------------------------------------------------------------- |
+| Dashboard        | Valor del inventario, bajo mínimo, lotes por caducar, consumo y merma por costo   |
+| Inventario       | Existencia por insumo, separando botella cerrada de botella de copeo              |
 | Lotes y marbetes | Una partida por botella, con marbete y caducidad. Abrir botella (cerrada → copeo) |
-| Movimientos | Kardex completo. Alta manual de salida, ajuste y merma (por cantidad o por %) |
-| Conteo físico | Corte contra existencia física; al cerrar genera los ajustes por diferencia |
-| Insumos | Catálogo y costeo. El costo unitario se deriva de la presentación de compra |
-| Recetas | BOM de los 18 cócteles, con costo calculado, costo del recetario y margen |
-| Compras | Requisición, recepción de mercancía y control de envases prestados (cascos) |
-| Proveedores | Alta y edición, con cascos pendientes de devolver |
-| Ventas del POS | Tickets recibidos, su explosión a insumos y el descuento al inventario |
+| Movimientos      | Kardex completo. Alta manual de salida, ajuste y merma (por cantidad o por %)     |
+| Conteo físico    | Corte contra existencia física; al cerrar genera los ajustes por diferencia       |
+| Insumos          | Catálogo y costeo. El costo unitario se deriva de la presentación de compra       |
+| Recetas          | BOM de los 18 cócteles, con costo calculado, costo del recetario y margen         |
+| Compras          | Requisición, recepción de mercancía y control de envases prestados (cascos)       |
+| Proveedores      | Alta y edición, con cascos pendientes de devolver                                 |
+| Ventas del POS   | Tickets recibidos, su explosión a insumos y el descuento al inventario            |
 
 ### Cómo se modela el inventario
 
@@ -52,45 +57,67 @@ npm run preview    # sirve el build (única forma de probar la PWA)
 - **Vender sin existencia alerta pero no bloquea** (RF-ERP-13). El lote queda en negativo y
   el faltante se sigue viendo en el total, hasta que un conteo físico lo resuelva.
 
-## Estructura
+## Estructura: Feature-Sliced Design
 
 ```
 src/
-  api/index.ts          capa de datos (hoy en memoria)
-  domain/
-    types.ts            modelo de datos
-    inventario.ts       lógica pura: costeo, existencias, explosión de recetas, PEPS
-    inventario.test.ts  los checks de esa lógica
-  data/                 semilla: insumos, recetas, lotes, compras, ventas
-  hooks.ts              queries y mutaciones de React Query
-  ui.tsx                primitivas de UI
-  pages/                una por pantalla
-  App.tsx               router y layout
+  app/        composición: router, providers, layout, punto de entrada
+  pages/      una rebanada por ruta (11 pantallas)
+  widgets/    bloques compuestos que reusan varias pantallas
+  features/   acciones que cambian estado (recibir-mercancia, aplicar-venta, …)
+  entities/   modelo de negocio y datos (insumo, lote, receta, movimiento, …)
+  shared/     sin dominio: primitivas de UI, formato, cliente de datos, contratos
 ```
+
+Una capa solo importa de las que están debajo, nunca de otra rebanada de su misma capa, y
+siempre por el `index.ts` de la rebanada. **Esas reglas las hace cumplir ESLint**
+(`eslint-plugin-boundaries`) y el linter corre en el `pre-commit`, así que una violación de
+arquitectura no llega al repositorio.
+
+Detalle completo en [`docs/arquitectura.md`](docs/arquitectura.md) y en `CLAUDE.md`.
 
 ### La migración al backend
 
-Todos los componentes leen por React Query, y todas las llamadas pasan por `src/api/index.ts`.
-Cuando exista backend real, **sólo cambian los cuerpos de esas funciones por `fetch`**: ningún
-componente se entera, y el caché, los estados de carga y los de error siguen igual.
+Todos los componentes leen por React Query, y todas las llamadas pasan por
+`entities/*/api.ts`. El único archivo que sabe que hoy no hay backend es
+`src/shared/api/db.ts`. Cuando exista la API, **sólo cambian los cuerpos de esas funciones por
+`fetch`**: ningún componente se entera, y el caché, los estados de carga y los de error siguen
+igual.
 
-La lógica de `src/domain/` es TypeScript puro sin React. Está pensada para moverse tal cual al
-backend cuando se defina, así las reglas de inventario no se escriben dos veces.
+La lógica de `entities/*/model.ts` y `features/*/model.ts` es TypeScript puro sin React. Está
+pensada para moverse tal cual al backend cuando se defina, así las reglas de inventario no se
+escriben dos veces. Lo mismo con los esquemas Zod: validan el formulario hoy y el request
+mañana.
+
+La base Postgres (Supabase) se comparte con el POS y su esquema está en
+[`docs/db.sql`](docs/db.sql). El modelo del frontend **todavía no está alineado con él**: la
+tabla de divergencias y lo que hay que decidir antes de construir la API están en
+[`docs/arquitectura.md`](docs/arquitectura.md).
+
+## Pruebas
+
+223 pruebas en tres niveles: lógica de dominio (funciones puras), integración de features
+contra el servidor falso, y componentes de pantalla con Testing Library. La cobertura tiene
+umbrales que rompen el build si bajan (hoy 90.8% de sentencias, 91.3% de ramas).
+
+Las pruebas consultan por rol y texto accesible, nunca por clase CSS ni `data-testid`: si un
+cambio rompe la accesibilidad, rompe las pruebas.
 
 ## Decisiones técnicas
 
 Base: Vite + React + TypeScript + react-router + Tailwind, React Query, react-hook-form + zod,
-recharts, vite-plugin-pwa.
+recharts, vite-plugin-pwa. Calidad: ESLint 9 con `eslint-plugin-boundaries`, Prettier, Husky,
+lint-staged, commitlint, Vitest + Testing Library.
 
 Tres desvíos respecto a `docs/libs.md`, todos reversibles:
 
 - **Sin MSW.** Un service worker de más para lo que hoy es una capa de funciones. La ruta de
   migración es la misma y más corta.
-- **Sin shadcn/ui ni Radix.** Las primitivas en `src/ui.tsx` usan `<dialog>` y `<select>`
+- **Sin shadcn/ui ni Radix.** Las primitivas de `src/shared/ui/` usan `<dialog>` y `<select>`
   nativos, que ya traen foco, escape y accesibilidad resueltos. El diseño real viene después,
   con la identidad visual de Cuish; ahí se puede correr `npx shadcn init` encima — las
-  primitivas propias viven en `src/ui.tsx` y no estorban `components/ui/`.
-- **Sin @tanstack/react-table.** El `DataTable` de `src/ui.tsx` hace orden y filtro en ~60
+  primitivas propias viven en `shared/ui` y no estorban `components/ui/`.
+- **Sin @tanstack/react-table.** El `DataTable` de `src/shared/ui/` hace orden y filtro en ~60
   líneas, que es todo lo que estas tablas necesitan.
 
 También fuera: `date-fns` (`Intl` cubre `es-MX`) y la cola offline de datos, que es requisito
@@ -123,7 +150,7 @@ Cosas que salieron al cargar los datos y necesitan respuesta del cliente, no cam
 2. **Sbagliato**: el recetario declara $43.35 de costo, pero sus propias dosis dan $48.91
    (13% de desvío). **Centella**: cobra ~$7.70 de garnitura que no dosifica. Los otros 16
    cócteles cuadran dentro del 2%. La pantalla de Recetas marca las desviaciones y el test
-   `src/domain/inventario.test.ts` las deja fijadas.
+   `src/entities/receta/model.test.ts` las deja fijadas.
 3. **La cerveza no existe en el catálogo de 34 insumos**, pero los cascos y la compra por caja
    de 24 del contexto son sobre cerveza. Compras controla cascos, pero sin el insumo no hay
    qué recibir.
