@@ -27,6 +27,18 @@ describe('<InsumosPage>', () => {
     expect(within(jarabe).getByText('caduca')).toBeInTheDocument()
   })
 
+  it('dice cuántos caballitos rinde una botella', async () => {
+    renderConProviders(<InsumosPage />)
+
+    // 1,000 ml de mezcal a 45 ml por caballito
+    const mezcal = (await screen.findByRole('cell', { name: 'Mezcal' })).closest('tr')!
+    expect(within(mezcal).getByText(/22\.2/)).toBeInTheDocument()
+
+    // lo que no se sirve derecho no rinde caballitos
+    const hielo = screen.getByRole('cell', { name: 'Hielo' }).closest('tr')!
+    expect(within(hielo).getAllByText('—').length).toBeGreaterThan(0)
+  })
+
   it('abre el formulario al tocar una fila', async () => {
     const user = userEvent.setup()
     renderConProviders(<InsumosPage />)

@@ -33,6 +33,14 @@ describe('<RecetasPage>', () => {
     expect(await celdaDe('Negroni', 5)).not.toHaveTextContent('%')
   })
 
+  it('el copeo aparece como receta de un solo ingrediente y sin precio todavía', async () => {
+    renderConProviders(<RecetasPage />)
+
+    const copeo = (await screen.findByRole('cell', { name: 'Mezcal en caballito' })).closest('tr')!
+    expect(within(copeo).getByText('sin precio')).toBeInTheDocument()
+    expect(within(copeo).getAllByRole('cell')[3]).toHaveTextContent('1')
+  })
+
   it('el detalle muestra el BOM con su costo por ingrediente', async () => {
     const user = userEvent.setup()
     renderConProviders(<RecetasPage />)

@@ -3,6 +3,7 @@ export {
   bajoMinimo,
   costoUnitario,
   valorInventario,
+  rendimiento,
   type EstadoExistencia,
 } from './model'
 export {

@@ -19,3 +19,10 @@ export const costoUnitario = (costoCompra: number, presentacion: number) =>
 export function valorInventario(insumos: Insumo[], ex: Record<string, Existencia>): number {
   return insumos.reduce((total, i) => total + (ex[i.id]?.total ?? 0) * i.costoUnitario, 0)
 }
+
+/**
+ * Cuántos servicios rinde una presentación de compra. Para una mezcalería es el número
+ * que más importa: cuántos caballitos salen de una botella.
+ */
+export const rendimiento = (presentacion: number, mlPorServicio: number) =>
+  mlPorServicio > 0 ? presentacion / mlPorServicio : 0

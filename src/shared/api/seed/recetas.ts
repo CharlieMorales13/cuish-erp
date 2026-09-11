@@ -1,4 +1,6 @@
 import type { Receta } from '../contracts'
+import { CABALLITO_ML, mlAOnzas } from '../../model/unidades'
+import { INSUMOS } from './insumos'
 
 // Fuente: docs/productos, tabla "2. Recetario y costeo de cócteles" (18 cócteles).
 //
@@ -14,7 +16,7 @@ import type { Receta } from '../contracts'
 
 const g = (insumoId: string, cantidad: number) => ({ insumoId, cantidad, garnitura: true })
 
-export const RECETAS: Receta[] = [
+export const COCTELES: Receta[] = [
   {
     id: 'REC-01',
     nombre: 'Centella',
@@ -307,3 +309,26 @@ export const RECETAS: Receta[] = [
     ],
   },
 ]
+
+/**
+ * Servicio de copeo: el destilado se sirve derecho, sin receta de coctelería.
+ *
+ * Es una receta de un solo ingrediente, así que entra al mismo BOM que los cócteles y el POS
+ * lo vende igual. Sin esto el sistema no tendría cuánto descontarle a la botella cuando
+ * alguien pide un mezcal derecho, que es el corazón del negocio.
+ */
+export const RECETAS_COPEO: Receta[] = INSUMOS.filter((i) => i.categoria === 'Destilados').map(
+  (insumo, k) => ({
+    id: `REC-C${String(k + 1).padStart(2, '0')}`,
+    nombre: `${insumo.nombre} en caballito`,
+    cristaleria: 'Caballito',
+    metodo: 'Derecho',
+    garnitura: `${CABALLITO_ML} ml · ${mlAOnzas(CABALLITO_ML).toFixed(1)} oz`,
+    // El precio de venta del copeo lo fija el cliente; todavía no lo tenemos.
+    precio: 0,
+    costoDoc: 0,
+    ingredientes: [{ insumoId: insumo.id, cantidad: CABALLITO_ML }],
+  }),
+)
+
+export const RECETAS: Receta[] = [...COCTELES, ...RECETAS_COPEO]

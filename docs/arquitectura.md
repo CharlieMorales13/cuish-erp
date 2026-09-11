@@ -15,8 +15,8 @@ conectar la API sin reescribir nada del frontend.
 | --- | --- |
 | Pantallas operativas | **11** |
 | Requisitos funcionales implementados | **15 de 15** del alcance ERP |
-| Pruebas automatizadas | **226** |
-| Cobertura de código | **90.8%** sentencias · **91.3%** ramas |
+| Pruebas automatizadas | **240** |
+| Cobertura de código | **91.2%** sentencias · **91.3%** ramas |
 | Reglas de arquitectura verificadas por herramienta | **6 capas**, en cada commit |
 | Defectos encontrados y corregidos por la suite | **4** |
 
@@ -49,7 +49,7 @@ conectar la API sin reescribir nada del frontend.
 
 ### Ingeniería y calidad
 
-- **Vitest + Testing Library + jsdom**: 226 pruebas en tres niveles
+- **Vitest + Testing Library + jsdom**: 240 pruebas en tres niveles
 - **Umbrales de cobertura que detienen el build** si la calidad baja
 - **ESLint 9** con `eslint-plugin-boundaries`: reglas que hacen cumplir las capas de la
   arquitectura y el acceso por API pública de cada módulo
@@ -127,6 +127,12 @@ mezcalería:
 
 - **Botella cerrada y botella de copeo son partidas distintas** del mismo producto. Solo se
   consume de las abiertas, y abrir una botella es una operación con su propio registro.
+- **Copeo modelado como receta**: el trago derecho es una receta de un solo ingrediente, así
+  que el POS lo vende igual que un cóctel y el ERP le descuenta los mililitros exactos a la
+  botella. El negocio mide en onzas y el inventario en mililitros; la conversión vive en un
+  solo lugar.
+- **Rendimiento por botella**: el catálogo muestra cuántos caballitos salen de cada
+  presentación, que es el número con el que se administra una mezcalería.
 - **Trazabilidad por marbete**: cada botella entra con su identificador único de fábrica.
 - **PEPS entre lotes**: el consumo toma primero la partida abierta más antigua.
 - **El inventario se descuenta al cerrar la cuenta**, no al capturar cada consumo. Esto no es
@@ -165,7 +171,7 @@ Los 15 requisitos funcionales del alcance ERP están implementados:
 
 ## 5. Calidad: qué demuestra la suite
 
-226 pruebas en tres niveles, todas ejecutándose en cada `push`:
+240 pruebas en tres niveles, todas ejecutándose en cada `push`:
 
 | Nivel | Qué verifica |
 | --- | --- |

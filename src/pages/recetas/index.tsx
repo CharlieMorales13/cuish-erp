@@ -61,7 +61,12 @@ export default function RecetasPage() {
         header: 'Precio',
         align: 'right',
         valor: (r) => r.precio,
-        render: (r) => <span className="tabular-nums">{money(r.precio)}</span>,
+        render: (r) =>
+          r.precio > 0 ? (
+            <span className="tabular-nums">{money(r.precio)}</span>
+          ) : (
+            <Badge tono="warn">sin precio</Badge>
+          ),
       },
       {
         key: 'margen',

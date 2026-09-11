@@ -103,7 +103,7 @@ Formato de commit: `tipo(scope): descripción`. El scope conviene que sea la reb
 
 ## Pruebas
 
-`vitest` + `@testing-library/react` + jsdom. 223 pruebas.
+`vitest` + `@testing-library/react` + jsdom. 240 pruebas.
 
 - `resetDb()` corre antes de cada prueba: siempre se parte de la misma semilla.
 - Componentes: `renderConProviders` de `@/shared/test/render` (QueryClient + router).
@@ -127,6 +127,8 @@ Confirmado con el cliente (ya aplicado en el código, no lo vuelvas a preguntar)
 - El tamaño de la caja lo define el proveedor al comprar; el catálogo solo sugiere.
 - La cerveza es un producto más del catálogo (`INS-35`).
 - La requisición la autoriza el usuario del ERP que la crea, y guarda su nombre.
+- Las bebidas se miden en **onzas**; el caballito son **45 ml** (`CABALLITO_ML`). El copeo se
+  modela como receta de un solo ingrediente, no como un mecanismo aparte.
 
 Inventado y marcado con `PLACEHOLDER`: mínimos y máximos, dosis de garnitura, proveedores,
 lotes, marbetes, existencias iniciales, compras, conteos, ventas, y el costo de la cerveza.
@@ -134,12 +136,12 @@ lotes, marbetes, existencias iniciales, compras, conteos, ventas, y el costo de 
 
 ## Pendientes abiertos con el cliente
 
-Dos, y los dos bloquean funcionalidad:
+Tres, y los tres bloquean funcionalidad:
 
-1. **Onzas por caballito y por mezcalina.** Sin ese dato no se puede descontar mezcal en
-   copeo: un mezcal derecho no tiene cuánto restarle a la botella. Hoy solo se descuentan los
-   cócteles, porque su receta trae los mililitros.
-2. **Mínimos y máximos reales.** Hoy derivados de la presentación (1.5 / 6).
+1. **Medida real del caballito y de la mezcalina.** 45 ml es provisional; la mezcalina no
+   tiene medida, así que su servicio no existe todavía.
+2. **Precio de venta del copeo.** Hoy va en 0 y la pantalla lo marca "sin precio".
+3. **Mínimos y máximos reales.** Hoy derivados de la presentación (1.5 / 6).
 
 Más un hallazgo que el sistema detecta solo: **Centella** y **Sbagliato** declaran un costo
 que no cuadra con sus propias dosis. El test `entities/receta/model.test.ts` deja la lista

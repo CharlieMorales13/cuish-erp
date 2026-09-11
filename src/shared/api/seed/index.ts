@@ -1,6 +1,6 @@
 import type { Compra, Conteo, Lote, Movimiento, Proveedor, Venta } from '../contracts'
 import { INSUMOS } from './insumos'
-import { RECETAS } from './recetas'
+import { COCTELES, RECETAS } from './recetas'
 
 // PLACEHOLDER: proveedores, existencias iniciales, lotes, marbetes, compras, conteos
 // y ventas son inventados. Ningún documento del cliente los trae. Sustituir con el
@@ -171,7 +171,7 @@ const cuentas = [
 // Ventas ya recibidas del POS. `aplicada: false` = pendiente de descontar inventario,
 // que es lo que el ERP hace al cerrar la cuenta (RF-ERP-11).
 export const VENTAS: Venta[] = Array.from({ length: 12 }, (_, i) => {
-  const ids = [RECETAS[(i * 3) % 18].id, RECETAS[(i * 5 + 2) % 18].id]
+  const ids = [COCTELES[(i * 3) % COCTELES.length].id, COCTELES[(i * 5 + 2) % COCTELES.length].id]
   const lineas = ids.map((refId, k) => ({
     tipo: 'receta' as const,
     refId,

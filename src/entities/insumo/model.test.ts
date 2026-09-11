@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Existencia, Insumo } from '@/shared/api/contracts'
-import { bajoMinimo, costoUnitario, estadoExistencia, valorInventario } from './model'
+import { bajoMinimo, costoUnitario, estadoExistencia, rendimiento, valorInventario } from './model'
 
 const insumo = (p: Partial<Insumo> = {}): Insumo => ({
   id: 'INS-01',
@@ -70,5 +70,20 @@ describe('valorInventario', () => {
 
   it('trata como cero un insumo sin existencia registrada', () => {
     expect(valorInventario([insumo()], {})).toBe(0)
+  })
+})
+
+describe('rendimiento', () => {
+  it('dice cuántos caballitos salen de una botella', () => {
+    // 1,000 ml de mezcal a 45 ml por caballito
+    expect(rendimiento(1000, 45)).toBeCloseTo(22.22, 2)
+  })
+
+  it('una botella de 750 rinde menos', () => {
+    expect(rendimiento(750, 45)).toBeCloseTo(16.67, 2)
+  })
+
+  it('da cero si no hay medida de servicio, en vez de Infinity', () => {
+    expect(rendimiento(1000, 0)).toBe(0)
   })
 })

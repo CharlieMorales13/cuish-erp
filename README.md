@@ -21,7 +21,7 @@ El login es falso: cualquier usuario entra. Todo el estado se reinicia al recarg
 
 ```bash
 npm run check          # typecheck + lint + formato + tests. Esto es lo que hay que pasar
-npm run test           # 223 pruebas (vitest)
+npm run test           # 240 pruebas (vitest)
 npm run test:coverage  # con umbrales; falla si la cobertura baja
 npm run build          # build de producción + service worker
 npm run preview        # sirve el build (única forma de probar la PWA)
@@ -96,9 +96,9 @@ tabla de divergencias y lo que hay que decidir antes de construir la API están 
 
 ## Pruebas
 
-223 pruebas en tres niveles: lógica de dominio (funciones puras), integración de features
+240 pruebas en tres niveles: lógica de dominio (funciones puras), integración de features
 contra el servidor falso, y componentes de pantalla con Testing Library. La cobertura tiene
-umbrales que rompen el build si bajan (hoy 90.8% de sentencias, 91.3% de ramas).
+umbrales que rompen el build si bajan (hoy 91.2% de sentencias, 91.3% de ramas).
 
 Las pruebas consultan por rol y texto accesible, nunca por clase CSS ni `data-testid`: si un
 cambio rompe la accesibilidad, rompe las pruebas.
@@ -143,6 +143,9 @@ costo, y los 18 cócteles con cristalería, método, garnitura, costo declarado 
   presentación y costo placeholder hasta ver una factura.
 - **Quién autoriza una requisición**: el usuario del ERP que la crea. La compra guarda su
   nombre (`compra.usuario_id` en el esquema compartido).
+- **Copeo**: las bebidas se miden en onzas y el caballito son **45 ml** (≈ 1.5 oz) por
+  mientras. Cada destilado tiene su servicio de copeo como receta de un ingrediente, así que
+  el POS lo vende igual que un cóctel y el ERP le descuenta los 45 ml a la botella.
 
 **Todavía inventado, marcado con `PLACEHOLDER` en el código:**
 
@@ -154,12 +157,15 @@ costo, y los 18 cócteles con cristalería, método, garnitura, costo declarado 
 
 ## Pendientes con el cliente
 
-Dos, y ambos bloquean funcionalidad concreta:
+Tres, y los tres bloquean funcionalidad concreta:
 
-1. **Onzas por caballito y por mezcalina.** Sin ese dato el sistema no puede descontar mezcal
-   en copeo: si alguien pide un mezcal derecho, no hay cuánto restarle a la botella. Solo los
-   cócteles se descuentan, porque su receta trae los mililitros exactos.
-2. **Existencias mínimas y máximas reales.** Hoy son un valor derivado, y de él dependen las
+1. **Medida real del caballito y de la mezcalina.** El caballito está en 45 ml como valor
+   provisional del cliente; la mezcalina todavía no tiene medida, así que ese servicio no
+   existe en el catálogo. De este número dependen el rendimiento de la botella y el costo del
+   trago derecho.
+2. **Precio de venta del copeo.** Los servicios de copeo aparecen marcados como "sin precio"
+   en la pantalla de Recetas.
+3. **Existencias mínimas y máximas reales.** Hoy son un valor derivado, y de él dependen las
    alertas de reposición del dashboard.
 
 Y un hallazgo que el sistema detectó solo, para que el gerente lo resuelva:
