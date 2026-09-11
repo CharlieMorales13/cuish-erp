@@ -90,16 +90,15 @@ export default function RecetasPage() {
         </Button>
       }
     >
-      <Aviso>
-        Hay dos versiones del recetario que no coinciden. Aquí está cargada la de{' '}
-        <code className="font-mono text-xs">docs/productos</code>: confirmar con el gerente cuál es
-        la vigente antes de operar.
+      <Aviso tono="info">
+        Recetario vigente: el de la documentación del cliente. Estas recetas se administran desde
+        esta pantalla y son las que el POS consulta al cobrar.
         {desviadas.length > 0 && (
           <>
             {' '}
-            Además, {desviadas.length} receta{desviadas.length > 1 ? 's' : ''} difiere
-            {desviadas.length > 1 ? 'n' : ''} más de {pct(DESVIO_TOLERADO)} entre el costo calculado
-            y el que declara el recetario (garnituras sin dosificar).
+            El sistema detectó {desviadas.length} receta{desviadas.length > 1 ? 's' : ''} cuyo costo
+            declarado difiere más de {pct(DESVIO_TOLERADO)} del que dan sus propias dosis. Están
+            marcadas en la columna de costo.
           </>
         )}
       </Aviso>

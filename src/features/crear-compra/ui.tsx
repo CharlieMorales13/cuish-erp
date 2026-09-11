@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Aviso, Button, Field, Input, Modal, Select } from '@/shared/ui'
 import { money } from '@/shared/lib'
+import { USUARIO } from '@/shared/api/db'
 import type { LineaCompra } from '@/shared/api/contracts'
 import { useInsumosById } from '@/entities/insumo'
 import { useProveedores } from '@/entities/proveedor'
@@ -45,8 +46,8 @@ export function ModalCrearCompra({
     >
       <div className="flex flex-col gap-3">
         <Aviso tono="info">
-          Falta definir quién autoriza una requisición y si hay tope de monto. Por ahora cualquier
-          usuario la crea y la recibe.
+          La requisición queda a nombre de <strong>{USUARIO}</strong>, el usuario del ERP que la
+          autoriza.
         </Aviso>
 
         <div className="grid grid-cols-2 gap-3">

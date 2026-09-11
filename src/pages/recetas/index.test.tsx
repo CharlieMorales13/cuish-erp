@@ -10,9 +10,14 @@ describe('<RecetasPage>', () => {
     expect(within(tabla).getAllByRole('row')).toHaveLength(db.recetas.length + 1)
   })
 
-  it('advierte que hay dos versiones del recetario sin conciliar', async () => {
+  it('deja claro que este recetario es el vigente y el que consulta el POS', async () => {
     renderConProviders(<RecetasPage />)
-    expect(await screen.findByText(/dos versiones del recetario/)).toBeInTheDocument()
+    expect(await screen.findByText(/Recetario vigente/)).toBeInTheDocument()
+  })
+
+  it('reporta cuántas recetas tienen el costo declarado fuera de tolerancia', async () => {
+    renderConProviders(<RecetasPage />)
+    expect(await screen.findByText(/difiere más de/)).toBeInTheDocument()
   })
 
   it('marca las recetas cuyo costo calculado no cuadra con el declarado', async () => {

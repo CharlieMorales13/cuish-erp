@@ -99,6 +99,8 @@ export interface Compra {
   proveedorId: string
   fecha: string
   estado: 'requisicion' | 'recibida'
+  /** Nombre completo del usuario del ERP que autoriza la requisición. `compra.usuario_id`. */
+  usuario?: string
   lineas: LineaCompra[]
   cascosPrestados: number
   cascosDevueltos: number

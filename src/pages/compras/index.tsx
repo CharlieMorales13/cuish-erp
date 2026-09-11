@@ -32,8 +32,8 @@ export default function ComprasPage() {
     >
       {pendientes > 0 && (
         <Aviso>
-          Hay <strong>{pendientes} envases</strong> prestados sin devolver. Falta definir con el
-          cliente si el préstamo se controla por proveedor o por compra, y si tiene costo asociado.
+          Hay <strong>{pendientes} envases</strong> prestados sin devolver. El control es por compra
+          y se acumula por proveedor.
         </Aviso>
       )}
 

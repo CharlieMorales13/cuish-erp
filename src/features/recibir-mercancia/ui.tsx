@@ -20,13 +20,27 @@ export function ModalRecibirMercancia({
   const [insumoId, setInsumoId] = useState('')
   const [presentaciones, setPresentaciones] = useState(1)
   const [unidadCompra, setUnidadCompra] = useState<'pieza' | 'caja'>('pieza')
+  const [piezasPorCaja, setPiezasPorCaja] = useState<number | ''>('')
   const [proveedorId, setProveedorId] = useState('')
   const [marbete, setMarbete] = useState('')
   const [caducidad, setCaducidad] = useState(hoyISO())
 
   const insumo = insumos[insumoId]
-  const porCaja = insumo?.piezasPorCaja
+  // El catálogo solo sugiere el tamaño de caja: el proveedor lo cambia de compra en compra,
+  // así que quien recibe lo confirma. El campo se siembra con la sugerencia al elegir "caja",
+  // pero a partir de ahí manda lo que se capture — incluso vaciarlo.
+  const porCaja = piezasPorCaja === '' ? undefined : piezasPorCaja
   const piezas = piezasDeCompra(presentaciones, unidadCompra, porCaja)
+
+  const cambiarUnidad = (unidad: 'pieza' | 'caja') => {
+    setUnidadCompra(unidad)
+    if (unidad === 'caja') setPiezasPorCaja(insumo?.piezasPorCaja ?? '')
+  }
+
+  const cambiarInsumo = (id: string) => {
+    setInsumoId(id)
+    if (unidadCompra === 'caja') setPiezasPorCaja(insumos[id]?.piezasPorCaja ?? '')
+  }
 
   const enviar = async () => {
     if (!insumo) return
@@ -41,6 +55,7 @@ export function ModalRecibirMercancia({
     setInsumoId('')
     setMarbete('')
     setPresentaciones(1)
+    setPiezasPorCaja('')
     onCerrar()
   }
 
@@ -48,7 +63,7 @@ export function ModalRecibirMercancia({
     <Modal abierto={abierto} onCerrar={onCerrar} titulo="Recepción de mercancía">
       <div className="flex flex-col gap-3">
         <Field label="Insumo">
-          <Select value={insumoId} onChange={(e) => setInsumoId(e.target.value)}>
+          <Select value={insumoId} onChange={(e) => cambiarInsumo(e.target.value)}>
             <option value="">Selecciona un insumo…</option>
             {Object.values(insumos).map((i) => (
               <option key={i.id} value={i.id}>
@@ -67,20 +82,36 @@ export function ModalRecibirMercancia({
               onChange={(e) => setPresentaciones(Number(e.target.value))}
             />
           </Field>
-          <Field
-            label="Unidad de compra"
-            hint={porCaja ? `1 caja = ${porCaja} piezas` : 'Este insumo no se compra por caja'}
-          >
+          <Field label="Unidad de compra">
             <Select
               value={unidadCompra}
-              onChange={(e) => setUnidadCompra(e.target.value as 'pieza' | 'caja')}
-              disabled={!porCaja}
+              onChange={(e) => cambiarUnidad(e.target.value as 'pieza' | 'caja')}
             >
               <option value="pieza">Pieza / botella</option>
               <option value="caja">Caja</option>
             </Select>
           </Field>
         </div>
+
+        {unidadCompra === 'caja' && (
+          <Field
+            label="Piezas por caja"
+            hint={
+              insumo?.piezasPorCaja
+                ? `El catálogo sugiere ${insumo.piezasPorCaja}. Cámbialo si el proveedor mandó otra.`
+                : 'Confírmalo contra la caja que llegó.'
+            }
+          >
+            <Input
+              type="number"
+              min={1}
+              value={piezasPorCaja}
+              onChange={(e) =>
+                setPiezasPorCaja(e.target.value === '' ? '' : Number(e.target.value))
+              }
+            />
+          </Field>
+        )}
 
         <Field label="Proveedor">
           <Select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)}>

@@ -37,13 +37,26 @@ describe('<ModalRecibirMercancia>', () => {
     expect(screen.getByLabelText('Caducidad')).toBeInTheDocument()
   })
 
-  it('bloquea la compra por caja cuando el insumo no viene en caja', async () => {
-    const user = await abrirCon('INS-01')
-    expect(screen.getByLabelText('Unidad de compra')).toBeDisabled()
+  it('al comprar por caja sugiere el tamaño del catálogo pero deja corregirlo', async () => {
+    const user = await abrirCon('INS-19') // Coca: 24 por caja en el catálogo
 
-    await user.selectOptions(screen.getByLabelText('Insumo'), 'INS-19') // Coca: 24 por caja
-    expect(screen.getByLabelText('Unidad de compra')).toBeEnabled()
-    expect(screen.getByText('1 caja = 24 piezas')).toBeInTheDocument()
+    // Mientras se compre por pieza, el tamaño de la caja no estorba.
+    expect(screen.queryByLabelText('Piezas por caja')).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Unidad de compra'), 'caja')
+    expect(screen.getByLabelText('Piezas por caja')).toHaveValue(24)
+    expect(screen.getByText(/El catálogo sugiere 24/)).toBeInTheDocument()
+  })
+
+  it('el proveedor puede mandar otra caja y la recepción manda sobre el catálogo', async () => {
+    const user = await abrirCon('INS-19')
+    await user.selectOptions(screen.getByLabelText('Unidad de compra'), 'caja')
+
+    await user.clear(screen.getByLabelText('Piezas por caja'))
+    await user.type(screen.getByLabelText('Piezas por caja'), '12')
+    expect(screen.getByLabelText('Piezas por caja')).toHaveValue(12)
+
+    expect(await screen.findByText(/Entra .*ml/)).toHaveTextContent('4,260 ml') // 12 x 355 ml
   })
 
   it('adelanta cuánto va a entrar al almacén', async () => {
@@ -59,6 +72,11 @@ describe('<ModalRecibirMercancia>', () => {
     await user.selectOptions(screen.getByLabelText('Unidad de compra'), 'caja')
 
     expect(await screen.findByText(/Entra 8,520 ml/)).toBeInTheDocument() // 24 x 355 ml
+  })
+
+  it('la cerveza ya está en el catálogo, así que los cascos tienen qué recibir', async () => {
+    await abrirCon('INS-35')
+    expect(await screen.findByText(/Entra 1 pz/)).toBeInTheDocument()
   })
 
   it('registrar la entrada sube la existencia y cierra el diálogo', async () => {
