@@ -131,33 +131,44 @@ La PWA está desactivada en desarrollo (`devOptions.enabled: false`); sólo se p
 **Real, cargado verbatim de `docs/productos`:** los 34 insumos con su presentación de compra y
 costo, y los 18 cócteles con cristalería, método, garnitura, costo declarado y precio.
 
-**Inventado, marcado con `PLACEHOLDER` en el código:**
+**Confirmado con el cliente:**
+
+- **Recetario vigente**: el de `docs/productos`. Las recetas se administran desde el CRUD de
+  la pantalla de Recetas y son las que el POS consulta al cobrar.
+- **Caducidad**: caduca todo **menos el alcohol** (destilados, licores, vinos, cervezas). Se
+  deriva de la categoría en `seed/insumos.ts`, no se captura producto por producto.
+- **Cajas**: el tamaño de la caja lo define el proveedor al momento de comprar. El catálogo
+  solo sugiere un valor; la pantalla de recepción permite corregirlo.
+- **Cerveza**: se da de alta como un producto más. Ya está en el catálogo (`INS-35`), con
+  presentación y costo placeholder hasta ver una factura.
+- **Quién autoriza una requisición**: el usuario del ERP que la crea. La compra guarda su
+  nombre (`compra.usuario_id` en el esquema compartido).
+
+**Todavía inventado, marcado con `PLACEHOLDER` en el código:**
 
 - Existencias mínimas y máximas — se derivan de la presentación de compra (mín 1.5, máx 6)
-  para no inventar 68 números sueltos. Editables por insumo.
-- Qué insumos caducan y con qué fecha.
+  para no inventar 70 números sueltos. Editables por insumo.
 - Las dosis de garnitura: el recetario las describe en texto ("gajo de naranja") sin cantidad.
 - Proveedores, lotes, marbetes, existencias iniciales, compras, conteos y ventas.
-- `piezasPorCaja`: sólo se confirmó cerveza, y cerveza no está en el catálogo.
+- Precio y presentación de la cerveza.
 
-## Hallazgos para el gerente
+## Pendientes con el cliente
 
-Cosas que salieron al cargar los datos y necesitan respuesta del cliente, no cambio de código:
+Dos, y ambos bloquean funcionalidad concreta:
 
-1. **Dos recetarios que no coinciden** entre sí (cambian dosis e incluso ingredientes base:
-   Martini Sucio pasa de ginebra a vodka). Está cargado el de `docs/productos`. Falta confirmar
-   cuál es el vigente.
-2. **Sbagliato**: el recetario declara $43.35 de costo, pero sus propias dosis dan $48.91
-   (13% de desvío). **Centella**: cobra ~$7.70 de garnitura que no dosifica. Los otros 16
-   cócteles cuadran dentro del 2%. La pantalla de Recetas marca las desviaciones y el test
-   `src/entities/receta/model.test.ts` las deja fijadas.
-3. **La cerveza no existe en el catálogo de 34 insumos**, pero los cascos y la compra por caja
-   de 24 del contexto son sobre cerveza. Compras controla cascos, pero sin el insumo no hay
-   qué recibir.
+1. **Onzas por caballito y por mezcalina.** Sin ese dato el sistema no puede descontar mezcal
+   en copeo: si alguien pide un mezcal derecho, no hay cuánto restarle a la botella. Solo los
+   cócteles se descuentan, porque su receta trae los mililitros exactos.
+2. **Existencias mínimas y máximas reales.** Hoy son un valor derivado, y de él dependen las
+   alertas de reposición del dashboard.
 
-Siguen abiertos, de `docs/context.md`: onzas exactas por caballito y por mezcalina, qué
-productos caducan de verdad, qué más viene por caja, quién autoriza una requisición y si hay
-tope de monto, y cómo se controla el préstamo de envase.
+Y un hallazgo que el sistema detectó solo, para que el gerente lo resuelva:
+
+- **Centella** declara $26.04 de costo, pero sus dosis suman $20.29. **Sbagliato** declara
+  $43.35 y sus dosis suman $48.91 — se está vendiendo con 5.56 pesos más de costo del que
+  cree. Los otros 16 cócteles cuadran dentro del 2%. La pantalla de Recetas los marca y el
+  test `src/entities/receta/model.test.ts` deja la lista fijada: si el gerente corrige alguno,
+  el test avisa.
 
 ## Lo que no está
 

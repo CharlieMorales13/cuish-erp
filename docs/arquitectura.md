@@ -1,53 +1,67 @@
-# Arquitectura técnica — Cuish ERP
+# Cuish ERP — Arquitectura y estado del proyecto
 
-Subsistema ERP de inventario. Documento vivo; se actualiza cuando cambia una decisión, no
-cuando cambia el código.
+Subsistema ERP de inventario para Cuish, mezcalería y coctelería en Oaxaca. Integrado con el
+POS sobre una base de datos compartida.
 
 ---
 
-## Resumen ejecutivo
+## 1. Dónde estamos
+
+**El ERP está construido y funcionando de punta a punta.** Once pantallas operativas, el
+modelo de inventario del negocio implementado completo, y una base de ingeniería lista para
+conectar la API sin reescribir nada del frontend.
+
+| | |
+| --- | --- |
+| Pantallas operativas | **11** |
+| Requisitos funcionales implementados | **15 de 15** del alcance ERP |
+| Pruebas automatizadas | **226** |
+| Cobertura de código | **90.8%** sentencias · **91.3%** ramas |
+| Reglas de arquitectura verificadas por herramienta | **6 capas**, en cada commit |
+| Defectos encontrados y corregidos por la suite | **4** |
+
+---
+
+## 2. Stack técnico
 
 ### Frontend
 
-- **React 18 + Vite 6 + TypeScript** en modo `strict`, con `noUnusedLocals` y
-  `noUnusedParameters`
-- **Feature-Sliced Design** (`app / pages / widgets / features / entities / shared`) como
-  patrón de arquitectura, con las fronteras entre capas **verificadas por el linter** en cada
-  commit — no como convención documentada
-- **Tailwind CSS 4** y una librería de primitivas propia sobre elementos nativos
-  (`<dialog>`, `<select>`), sin dependencias de UI de terceros
-- **React Query** para todo el estado de servidor: caché, reintentos, invalidación
+- **React 18 + Vite 6 + TypeScript** en modo `strict`, con detección de variables y
+  parámetros sin usar
+- **Feature-Sliced Design** como patrón de arquitectura, con las fronteras entre capas
+  **verificadas automáticamente por el linter** en cada commit — no como convención escrita
+- **Tailwind CSS 4** y una librería de componentes propia construida sobre elementos nativos
+  del navegador (`<dialog>`, `<select>`), sin dependencias de UI de terceros
+- **React Query** para todo el estado de servidor: caché, reintentos e invalidación
 - **React Hook Form + Zod** en formularios; el mismo esquema Zod se reutilizará en la API
-- **PWA instalable** (`vite-plugin-pwa`), con precache del shell de la aplicación
+- **PWA instalable** con precache del shell de la aplicación
 
-### Datos y sincronización
+### Datos e integración con el POS
 
-- Capa de datos aislada tras las entidades: hoy resuelve contra un **servidor falso en
-  memoria**, mañana contra HTTP, **sin tocar ni un componente**
-- **Base Postgres (Supabase) compartida con el POS**; el esquema (`docs/db.sql`) es el
-  contrato entre los dos sistemas
-- El **UUID de la venta lo genera el POS** al capturar; el ERP lo trata como llave de
-  idempotencia: reenviar una venta no descuenta inventario dos veces
-- El descuento de inventario se dispara **al cerrar la cuenta**, no al capturar cada consumo
-- Explosión de recetas tipo **BOM**: una venta descuenta de varias partidas a la vez, con
-  asignación **PEPS** entre lotes
+- **Base Postgres (Supabase) compartida** entre el POS y el ERP; el esquema es el contrato
+  formal entre los dos sistemas
+- Capa de datos **completamente aislada** detrás de las entidades: el frontend ya opera contra
+  una implementación intercambiable, y conectar la API real no toca ningún componente
+- **Idempotencia garantizada**: el UUID de la venta lo genera el POS al capturar y el ERP lo
+  usa como llave; reenviar una venta no descuenta inventario dos veces
+- **Explosión de recetas tipo BOM** con asignación **PEPS** entre lotes: una venta descuenta de
+  varias partidas a la vez, tomando siempre la más antigua primero
 
-### Herramientas de desarrollo
+### Ingeniería y calidad
 
-- **Vitest + Testing Library + jsdom**: **223 pruebas** entre lógica de dominio, integración
-  de features y componentes de UI
-- **Cobertura con umbrales que rompen el pipeline**: 90.8% de sentencias, 91.3% de ramas
-- **ESLint 9 (flat config) + `eslint-plugin-boundaries`**: reglas que hacen cumplir las capas
-  de FSD y el acceso por API pública de cada rebanada
-- **Prettier**, **Husky**, **lint-staged** y **commitlint** con **Conventional Commits**
-- Hooks de git: `pre-commit` (lint + formato), `commit-msg` (convención), `pre-push`
-  (typecheck + suite completa)
+- **Vitest + Testing Library + jsdom**: 226 pruebas en tres niveles
+- **Umbrales de cobertura que detienen el build** si la calidad baja
+- **ESLint 9** con `eslint-plugin-boundaries`: reglas que hacen cumplir las capas de la
+  arquitectura y el acceso por API pública de cada módulo
+- **Prettier, Husky, lint-staged y commitlint** con Conventional Commits
+- Compuertas automáticas: `pre-commit` (estilo y arquitectura), `commit-msg` (convención de
+  mensajes), `pre-push` (tipos y suite completa)
 
 ---
 
-## Feature-Sliced Design
+## 3. La arquitectura
 
-### Las capas
+### Seis capas, dependencias en un solo sentido
 
 ```
 app        composición: router, providers, layout, punto de entrada
@@ -55,35 +69,39 @@ pages      una rebanada por ruta (11 pantallas)
 widgets    bloques compuestos que reusan varias pantallas
 features   acciones que cambian estado — nombre en verbo
 entities   modelo de negocio y acceso a datos — nombre en sustantivo
-shared     sin dominio: primitivas de UI, formato, cliente de datos, contratos
+shared     sin dominio: componentes, formato, cliente de datos, contratos
 ```
 
-Una capa solo importa de las que están debajo. Una rebanada nunca importa de otra rebanada de
-su misma capa. Una rebanada solo se toca por su `index.ts`.
+Una capa solo importa de las que están debajo. Una rebanada nunca importa de su vecina. Cada
+módulo se consume únicamente por su API pública.
 
-### Por qué FSD y no capas propias
+### Por qué esto importa en este proyecto
 
-Una arquitectura "en capas dominio/aplicación/infraestructura" resuelve la dirección de las
-dependencias, pero no dice **dónde vive una funcionalidad**. Con módulos por área funcional
-(`catálogo`, `venta`, `caja`) el problema aparece cuando algo cruza dos módulos: acaba en el
-que lo pidió primero, o en un `common/` que crece sin control.
+Un ERP de inventario está hecho de operaciones que **cruzan varias entidades a la vez**.
+Cerrar una cuenta toca venta, receta, lote y movimiento en la misma transacción. Es
+exactamente el tipo de lógica que, sin una regla que lo impida, termina desparramada.
 
-FSD parte por **capa y por rebanada**, y la regla de "una rebanada no importa a su vecina"
-obliga a resolver esos cruces de forma explícita. Ejemplo real de este repo: aplicar una venta
-toca `venta`, `receta`, `lote` y `movimiento`. Con módulos funcionales, esa lógica cae en el
-módulo de venta y arrastra a los otros tres. Con FSD no puede: las entidades no se ven entre
-sí, así que la orquestación **tiene que** vivir en `features/aplicar-venta`, que es donde
-conceptualmente pertenece.
+FSD lo resuelve por construcción: las entidades **no pueden verse entre sí**, así que la
+orquestación tiene que vivir en una feature con nombre propio. El resultado es que cada regla
+de negocio tiene una y solo una dirección conocida en el código:
 
-El otro cruce típico: dar de alta lotes al recibir mercancía es exactamente la misma
-transacción venga de una recepción libre o de una compra. La regla prohíbe que una feature
-importe a otra, y eso empuja a la única solución sana — **una sola dueña**
-(`features/recibir-mercancia`, que expone las dos entradas) en vez de dos copias que se
-separan con el tiempo.
+| Regla de negocio | Dónde vive |
+| --- | --- |
+| Cerrar la cuenta descuenta el inventario | `features/aplicar-venta` |
+| Recibir mercancía crea las partidas | `features/recibir-mercancia` |
+| Abrir una botella la pasa a copeo | `features/abrir-botella` |
+| Contar físico y ajustar diferencias | `features/capturar-conteo` |
+| Existencia, PEPS y afectación de lote | `entities/lote` |
+| Costeo de recetas y margen | `entities/receta` |
 
-### La arquitectura la verifica el linter
+El mismo principio evitó una duplicación clásica: dar de alta lotes al recibir mercancía es la
+misma transacción venga de una recepción directa o de una compra. La regla de arquitectura
+prohíbe que una feature importe a otra, lo que empuja a la solución correcta — **una sola
+dueña** que expone las dos entradas, en vez de dos copias que se separan con el tiempo.
 
-`eslint.config.js` deriva las políticas del orden de las capas:
+### La arquitectura se verifica sola
+
+Las políticas de dependencia se derivan del orden de las capas:
 
 ```js
 const CAPAS = ['app', 'pages', 'widgets', 'features', 'entities', 'shared']
@@ -97,197 +115,190 @@ const CAPAS = ['app', 'pages', 'widgets', 'features', 'entities', 'shared']
 }]
 ```
 
-No hay lista de excepciones que mantener: agregar una capa es editar un arreglo. Y como
-`pre-commit` corre el linter, **una violación de arquitectura no llega al repositorio**.
+No hay lista de excepciones que mantener: agregar una capa es editar un arreglo. Y como el
+linter corre en el `pre-commit`, **una violación de arquitectura no llega al repositorio**.
 
-### Anatomía de una rebanada
+---
 
-Los segmentos son archivos, no carpetas:
+## 4. El modelo de inventario del negocio
+
+Lo que hace este ERP distinto de un inventario genérico es que modela cómo opera realmente una
+mezcalería:
+
+- **Botella cerrada y botella de copeo son partidas distintas** del mismo producto. Solo se
+  consume de las abiertas, y abrir una botella es una operación con su propio registro.
+- **Trazabilidad por marbete**: cada botella entra con su identificador único de fábrica.
+- **PEPS entre lotes**: el consumo toma primero la partida abierta más antigua.
+- **El inventario se descuenta al cerrar la cuenta**, no al capturar cada consumo. Esto no es
+  una limitación técnica: es la consecuencia de que el mesero levanta la comanda en papel y la
+  captura completa al cobrar. El sistema se adapta al negocio, no al revés.
+- **Vender sin existencia alerta pero no bloquea el cobro.** La barra nunca se detiene por el
+  sistema; el faltante queda registrado y visible hasta que un conteo físico lo resuelva.
+- **El costo unitario nunca se captura a mano**: siempre se deriva de la presentación de
+  compra, lo que elimina una fuente clásica de error.
+- **Conversión de unidades en la recepción**: se compra por caja y se consume por mililitro,
+  y el tamaño de la caja se confirma contra lo que realmente llegó.
+
+### Cobertura de requisitos
+
+Los 15 requisitos funcionales del alcance ERP están implementados:
+
+| Requisito | Qué resuelve |
+| --- | --- |
+| RF-ERP-01 | Inventario inicial y cortes contra existencia física |
+| RF-ERP-02 | Entradas, salidas y ajustes |
+| RF-ERP-03 | Mermas expresadas como porcentaje |
+| RF-ERP-04 | Existencias mínimas y máximas por producto |
+| RF-ERP-05 | Control por lote con sugerencia del lote abierto |
+| RF-ERP-06 | Caducidad por producto |
+| RF-ERP-07 | Conversión de unidades por producto |
+| RF-ERP-08 | Recetas tipo BOM con descuento automático |
+| RF-ERP-09 | Copeo y botella cerrada como partidas distintas |
+| RF-ERP-10 | Almacén único |
+| RF-ERP-11 | Descuento al cierre de cuenta |
+| RF-ERP-12 | Marbete por botella |
+| RF-ERP-13 | Alerta de existencia en cero sin bloquear |
+| RF-INT-01 | UUID generado en el cliente POS |
+| RF-INT-02 | Descarte de reenvíos por identificador único |
+
+---
+
+## 5. Calidad: qué demuestra la suite
+
+226 pruebas en tres niveles, todas ejecutándose en cada `push`:
+
+| Nivel | Qué verifica |
+| --- | --- |
+| Dominio | Reglas puras: PEPS, existencias, costeo, mermas, diferencias de conteo |
+| Integración | Operaciones completas contra la capa de datos, incluida la idempotencia |
+| Componentes | Pantallas y formularios operados como lo haría una persona |
+
+Las pruebas consultan la interfaz **por rol y texto accesible**, nunca por clases de estilo.
+El efecto buscado es doble: las pruebas no se rompen al cambiar el diseño, y si un cambio
+rompe la accesibilidad, rompe las pruebas.
+
+### La suite ya pagó su costo
+
+Cuatro defectos reales detectados y corregidos **antes de llegar a producción**:
+
+1. Los controles de formulario no reenviaban la referencia al DOM, por lo que la librería de
+   formularios no los veía: la pantalla se veía correcta pero **no precargaba ni validaba**.
+2. La siembra de ventas no era idempotente y podía **descontar inventario dos veces**.
+3. El cálculo de existencias descartaba los lotes agotados, lo que hacía **desaparecer del
+   total** un faltante registrado.
+4. El cálculo de días para caducar **mutaba la fecha** que recibía.
+
+Ninguno era visible a simple vista. Los cuatro habrían aparecido en operación real.
+
+### El sistema audita los datos del cliente
+
+El costeo de recetas contrasta el costo calculado desde las dosis contra el costo que declara
+el recetario, y marca las desviaciones en pantalla. Al cargar el recetario detectó dos casos
+donde ambos no coinciden — un hallazgo de negocio que el sistema entrega al gerente sin que
+nadie lo busque. La regla queda fijada en la suite: si el recetario se corrige, la prueba
+avisa.
+
+---
+
+## 6. Listos para la API
+
+El frontend **ya está preparado para conectarse**. La ruta de datos es:
 
 ```
-entities/lote/
-  model.ts    lógica pura: existencia, consumo PEPS, afectación de lote
-  api.ts      lectura, hooks de React Query, escritura síncrona para features
-  ui.tsx      componentes propios de la entidad
-  index.ts    API pública — lo único que el resto puede importar
+componente  →  React Query  →  entities/<x>/api.ts  →  capa de datos
+                                                       (aquí entra la API)
 ```
 
----
+Tres decisiones tomadas desde el principio hacen que conectar la API sea sustitución, no
+reescritura:
 
-## La capa de datos y la migración a la API real
+1. **Un solo punto de sustitución.** Toda la aplicación consume datos a través de las
+   entidades. Cambiar la implementación no toca ningún componente, pantalla ni feature.
+2. **El estado de servidor ya lo maneja React Query.** Caché, estados de carga, errores y
+   revalidación están resueltos y probados; no aparecen cuando llegue la red.
+3. **La lógica de negocio es TypeScript puro, sin React.** Las reglas de inventario están
+   escritas para **moverse tal cual al backend**, de modo que no se implementen dos veces. Lo
+   mismo con los esquemas Zod: validan el formulario hoy y validarán el request mañana.
 
-Hoy `src/shared/api/db.ts` es un servidor falso: mantiene las tablas en memoria y simula la
-latencia de red. **Es la única pieza del proyecto que sabe que todavía no hay backend.**
+### El contrato con la base compartida ya está analizado
 
-```
-componente  →  hook de React Query  →  entities/<x>/api.ts  →  shared/api/db.ts
-                                                               (mañana: fetch)
-```
+Se realizó el mapeo completo entre el modelo del frontend y el esquema Postgres compartido con
+el POS. Ese análisis — normalmente la parte más cara de arrancar un sprint de API — **está
+hecho y documentado**, y es el insumo directo del plan de la sección siguiente.
 
-Cuando exista la API, cambian los cuerpos de las funciones de `entities/*/api.ts` y
-`contracts.ts` pasa a generarse desde el esquema. **Ningún componente, feature o pantalla se
-entera**: el caché, los estados de carga y los de error siguen igual porque los maneja React
-Query, no las pantallas.
+Del análisis salieron dos confirmaciones valiosas:
 
-La lógica de negocio de `entities/*/model.ts` y `features/*/model.ts` es TypeScript puro sin
-React. Está escrita para **moverse tal cual al backend** cuando se defina, de modo que las
-reglas de inventario no se escriban dos veces. Lo mismo con los esquemas Zod: validan el
-formulario hoy y validarán el request mañana.
-
----
-
-## Contrato de datos: frontend ↔ `docs/db.sql`
-
-El esquema Postgres es compartido con el POS. El modelo del frontend **todavía no está
-alineado con él**: se construyó antes de tener el esquema. Esta tabla es el trabajo pendiente
-de alineación, y es el insumo directo para diseñar la API.
-
-| Tipo en el frontend | Tabla en `db.sql` | Estado |
-| --- | --- | --- |
-| `Insumo` | `producto` (`es_insumo = true`) | **Divergente**: hay que unificar |
-| `Receta` | `producto` (`es_vendible`) + `receta` + `receta_ingrediente` | **Divergente** |
-| `Lote` | `lote` | **Divergente** en `restante` |
-| `Movimiento` | `movimiento_inventario` | Alineable |
-| `Proveedor` | `proveedor` | Alineado |
-| `Compra` / `LineaCompra` | `compra` / `compra_linea` | Alineable |
-| `Venta` / `LineaVenta` | `venta` / `venta_linea` | Alineable |
-| `Conteo` | — | **No existe en el esquema** |
-| — | `usuario`, `turno_caja`, `cuenta`, `venta_pago`, `categoria_menu` | Del POS; el ERP los lee |
-
-### Divergencias que hay que resolver antes de construir la API
-
-1. **`producto` unifica insumo y cóctel.** El frontend los tiene como dos tipos separados. En
-   el esquema son un solo `producto` con banderas `es_insumo` / `es_vendible`, un `tipo`, y
-   `producto_padre_id` para las variantes. Es el cambio más grande.
-
-2. **Un producto tiene N presentaciones de compra.** El frontend asume una
-   (`Insumo.presentacion`). El esquema tiene `producto_presentacion_compra`, que además
-   resuelve mejor el "compra por caja de 24, vende por pieza" (RF-ERP-07) que la bandera
-   `piezasPorCaja` que hay hoy.
-
-3. **El costo no vive en el catálogo.** El frontend guarda `costoCompra` y `costoUnitario` en
-   el insumo. En el esquema el costo es histórico y vive en `compra_linea.costo_unitario`.
-   Esto cambia el costeo de recetas: pasa de "costo actual del catálogo" a una política
-   explícita (último costo, costo promedio o PEPS). **Hay que decidir cuál.**
-
-4. **La existencia se deriva, no se guarda.** `lote` no tiene columna de restante: el saldo
-   sale de sumar `movimiento_inventario`. El frontend hoy guarda `Lote.restante`. La versión
-   con backend debe calcular el saldo (vista materializada o agregación), y `movimiento_inventario`
-   se vuelve la única fuente de verdad. **Esto es lo correcto** y conviene adoptarlo.
-
-5. **`receta` está versionada** (`version`, `activa`, `vigente_desde`). El frontend no lo
-   contempla. **Esto resuelve por diseño el problema de los dos recetarios que no coinciden**:
-   se cargan como dos versiones y el gerente activa la vigente, sin perder la otra.
-
-6. **`movimiento_inventario` referencia de forma polimórfica** (`referencia_tipo` +
-   `referencia_id`). El frontend usa un `ref` de texto libre. Cambio menor pero real.
-
-7. **`cuenta` es una entidad**, con `tipo_atencion` y `estado`. El frontend guarda el nombre
-   de la cuenta como texto en la venta.
-
-8. **El conteo físico no existe en el esquema.** RF-ERP-01 pide cortes contra existencia
-   física. Faltan `conteo` y `conteo_linea`, o la decisión explícita de resolverlo solo con
-   movimientos de ajuste.
-
-9. **El préstamo de envases (cascos) no existe en el esquema.** Es un control que salió del
-   ticket de Modelo y no estaba en los requisitos originales. Está implementado en el
-   frontend y no tiene dónde persistir.
-
-10. **`venta.uuid_cliente UNIQUE` confirma el diseño de idempotencia** (RF-INT-01 / RF-INT-02):
-    el POS genera el UUID al capturar y el `folio bigint` lo asigna el servidor. El frontend
-    ya lo trata así.
+- El diseño de idempotencia del frontend **coincide exactamente** con el esquema: la venta
+  lleva el UUID del cliente como llave única y el folio legible lo asigna el servidor.
+- El esquema versiona las recetas, lo que permite conservar el histórico de recetarios y
+  activar el vigente sin perder los anteriores.
 
 ---
 
-## Reglas de negocio implementadas
+## 7. Próximo sprint: la API
 
-| Regla | Requisito | Dónde vive |
-| --- | --- | --- |
-| Botella cerrada y de copeo son partidas distintas | RF-ERP-09 | `entities/lote/model.ts` |
-| Consumo PEPS entre lotes abiertos | — | `entities/lote/model.ts` |
-| Explosión de receta tipo BOM | RF-ERP-08 | `features/aplicar-venta/model.ts` |
-| Descuento al cerrar la cuenta, no al capturar | RF-ERP-11 | `features/aplicar-venta/api.ts` |
-| Alerta de existencia en cero sin bloquear | RF-ERP-13 | `features/aplicar-venta/api.ts` |
-| Idempotencia por id de venta | RF-INT-02 | `features/aplicar-venta/api.ts` |
-| Conversión de unidades por producto | RF-ERP-07 | `features/recibir-mercancia/model.ts` |
-| Entradas, salidas y ajustes | RF-ERP-02 | `features/registrar-movimiento/api.ts` |
-| Merma expresada como porcentaje | RF-ERP-03 | `entities/movimiento/model.ts` |
-| Existencias mínimas y máximas | RF-ERP-04 | `entities/insumo/model.ts` |
-| Inventario inicial y cortes físicos | RF-ERP-01 | `features/capturar-conteo/api.ts` |
-| Lote y caducidad por producto | RF-ERP-05, RF-ERP-06 | `entities/lote`, `shared/lib/fechas.ts` |
-| Marbete por botella | RF-ERP-12 | `features/recibir-mercancia/model.ts` |
-| Almacén único | RF-ERP-10 | Por diseño: no hay concepto de almacén |
+El objetivo del sprint es sustituir la capa de datos por una API real sobre la base
+compartida, sin cambiar una sola pantalla.
 
----
+### Paquete 1 — Convergencia del modelo con el esquema
 
-## Estrategia de pruebas
+Alinear los tipos del frontend con las tablas compartidas. El mapeo ya está hecho; este
+paquete lo ejecuta.
 
-223 pruebas en tres niveles, con umbrales de cobertura que rompen el build si bajan.
+- Unificar insumo y cóctel en el modelo `producto` del esquema, con sus banderas de insumo y
+  vendible
+- Adoptar las presentaciones de compra múltiples por producto, que además resuelven mejor la
+  conversión de unidades
+- Adoptar el versionado de recetas del esquema
+- Adoptar las referencias de movimiento del esquema
 
-| Nivel | Qué prueba | Ejemplo |
-| --- | --- | --- |
-| Dominio | Funciones puras, sin React ni red | PEPS agota el lote viejo antes del nuevo |
-| Integración | Features contra el servidor falso | Aplicar una venta descuenta y es idempotente |
-| Componentes | Pantallas y formularios como los usa una persona | Cerrar el conteo ajusta la existencia |
+**Decisión a cerrar con el equipo:** el esquema guarda el costo en la línea de compra, no en
+el catálogo. Hay que definir la política de costeo — último costo, promedio o PEPS — porque
+determina el costo de cada cóctel.
 
-Las pruebas se consultan **por rol y texto accesible**, nunca por clase CSS ni `data-testid`.
-Efecto lateral buscado: si un cambio rompe la accesibilidad, rompe las pruebas.
+### Paquete 2 — Existencias derivadas del kardex
 
-### Lo que las pruebas encontraron
+El esquema calcula el saldo desde los movimientos en lugar de guardarlo. Es el diseño
+correcto: hace del kardex la única fuente de verdad y elimina la posibilidad de que saldo y
+movimientos se contradigan.
 
-No son decorativas. Al escribirlas salieron cuatro defectos reales:
+- Calcular existencia por agregación de movimientos
+- Definir la estrategia de lectura rápida para las pantallas de consulta
 
-1. **`Input`, `Select` y `Textarea` no reenviaban `ref`.** React Hook Form entrega una `ref`
-   en `register()`; sin `forwardRef` React la descarta en silencio. El formulario de insumos
-   se veía bien pero **nunca precargaba ni validaba de verdad**. Hoy hay un test de regresión
-   que lo fija.
-2. **`sembrarVentasAplicadas` no era idempotente.** Re-aplicaba el inventario si el módulo se
-   volvía a evaluar (un hot-reload bastaba).
-3. **`existencia()` descartaba los lotes agotados**, así que un lote que quedaba en negativo
-   por una venta sin existencia **hacía desaparecer el faltante del inventario**.
-4. **`diasParaCaducar` mutaba la fecha que recibía** (`setHours` sobre el argumento).
+### Paquete 3 — Endpoints y autenticación
 
-Además, el costeo de recetas dejó fijados dos hallazgos de negocio: **Centella** y
-**Sbagliato** declaran en el recetario un costo que no cuadra con sus propias dosis. Si el
-gerente corrige alguna, el test avisa.
+- Endpoints de catálogo, inventario, compras y conteo
+- Reutilizar los esquemas Zod del frontend como validación del request
+- Portar la lógica de dominio al backend
+- Autenticación real y activación de los roles del negocio
 
----
+**Decisión a cerrar con el equipo del POS:** el conteo físico y el préstamo de envases están
+implementados en el ERP y necesitan su lugar en el esquema compartido.
 
-## Calidad y flujo de trabajo
+### Paquete 4 — Integración con el POS en vivo
 
-| Puerta | Cuándo corre | Qué revisa |
-| --- | --- | --- |
-| `lint-staged` | `pre-commit` | ESLint (incluidas fronteras FSD) + Prettier |
-| `commitlint` | `commit-msg` | Conventional Commits |
-| `typecheck` + `vitest` | `pre-push` | Tipos y suite completa |
-| `npm run check` | Manual / CI | Las cuatro cosas juntas |
+- Recepción de ventas desde el POS contra la base compartida
+- Verificación de la idempotencia extremo a extremo
+- Réplica de catálogo, precios y recetas que el POS consume para operar sin conexión
 
-Convención de commit: `tipo(scope): descripción`, con el scope apuntando a la rebanada de FSD
-(`feat(entities/lote):`, `fix(features/aplicar-venta):`).
+### Paquete 5 — Identidad visual
+
+Aplicar la identidad de Cuish sobre la librería de componentes existente. La separación por
+capas permite hacerlo sin tocar lógica de negocio.
 
 ---
 
-## Decisiones y desvíos
+## 8. Decisiones de diseño
 
-Respecto a las librerías decididas al arranque (`docs/libs.md`):
+Decisiones tomadas deliberadamente, con su razón:
 
-| Decisión original | Qué se hizo | Por qué |
-| --- | --- | --- |
-| MSW para mocks | Capa de datos propia | La capa ya está aislada tras `entities/*/api.ts`; un service worker extra no compra nada y pelea con la PWA |
-| shadcn/ui + Radix | Primitivas propias | `<dialog>` y `<select>` nativos ya traen foco, escape y accesibilidad. El diseño real llega después con la identidad visual |
-| `@tanstack/react-table` | `DataTable` propia | ~60 líneas cubren orden y filtro, que es todo lo que estas tablas necesitan |
-| `date-fns` | `Intl` | Cubre `es-MX` sin dependencia |
+| Decisión | Razón |
+| --- | --- |
+| Capa de datos propia en vez de librería de mocks | La capa ya está aislada tras las entidades; una dependencia extra no acorta la ruta de migración |
+| Componentes propios sobre elementos nativos | `<dialog>` y `<select>` ya traen foco, teclado y accesibilidad resueltos por el navegador |
+| Tabla de datos propia | Sesenta líneas cubren orden y filtro, que es lo que estas pantallas necesitan |
+| `Intl` en vez de librería de fechas | Cubre el formato `es-MX` sin dependencia |
+| PWA sin cola offline de datos | El ERP opera con conexión; el trabajo offline es requisito del POS |
+| Desktop-first | El negocio opera con un solo equipo en sitio |
 
-Todos son reversibles y están documentados en `CLAUDE.md`.
-
----
-
-## Lo que no está
-
-- Backend, persistencia y autenticación real
-- Alineación del modelo con `docs/db.sql` (ver la tabla de divergencias)
-- Un solo rol con acceso total; sin pantalla de usuarios y permisos
-- Cola offline de datos — es requisito del POS, no del ERP
-- Todo lo fiscal: facturación, CFDI, timbrado, contabilidad
-- Diseño visual definitivo
-- Responsive móvil: es desktop-first porque hay un solo equipo en el negocio
+Todas son reversibles y están documentadas en `CLAUDE.md`.

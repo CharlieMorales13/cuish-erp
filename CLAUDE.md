@@ -120,20 +120,30 @@ maquetado. El nombre de la prueba debe decir qué regla protege.
 Real, verbatim de `docs/productos`: los 34 insumos con presentación y costo, y las 18 recetas
 con cristalería, método, garnitura, costo declarado y precio.
 
-Inventado y marcado con `PLACEHOLDER` en el código: mínimos y máximos, qué caduca, dosis de
-garnitura, proveedores, lotes, marbetes, existencias iniciales, compras, conteos y ventas.
+Confirmado con el cliente (ya aplicado en el código, no lo vuelvas a preguntar):
+
+- Recetario vigente = el de `docs/productos`; se administra desde el CRUD de Recetas.
+- Caduca todo **menos el alcohol**. Se deriva de la categoría en `seed/insumos.ts`.
+- El tamaño de la caja lo define el proveedor al comprar; el catálogo solo sugiere.
+- La cerveza es un producto más del catálogo (`INS-35`).
+- La requisición la autoriza el usuario del ERP que la crea, y guarda su nombre.
+
+Inventado y marcado con `PLACEHOLDER`: mínimos y máximos, dosis de garnitura, proveedores,
+lotes, marbetes, existencias iniciales, compras, conteos, ventas, y el costo de la cerveza.
 **No los presentes como reales.**
 
-## Hallazgos abiertos con el cliente
+## Pendientes abiertos con el cliente
 
-Están en el README y en `docs/context.md`. Los tres que más pegan al código:
+Dos, y los dos bloquean funcionalidad:
 
-1. Hay **dos recetarios que no coinciden**; está cargado el de `docs/productos`.
-2. **Centella** y **Sbagliato** tienen costo declarado que no cuadra con sus propias dosis.
-   El test `entities/receta/model.test.ts` deja esa lista fijada: si el gerente corrige una,
-   el test te avisa.
-3. **La cerveza no existe en el catálogo de 34 insumos**, pero los cascos y la compra por caja
-   de 24 son sobre cerveza.
+1. **Onzas por caballito y por mezcalina.** Sin ese dato no se puede descontar mezcal en
+   copeo: un mezcal derecho no tiene cuánto restarle a la botella. Hoy solo se descuentan los
+   cócteles, porque su receta trae los mililitros.
+2. **Mínimos y máximos reales.** Hoy derivados de la presentación (1.5 / 6).
+
+Más un hallazgo que el sistema detecta solo: **Centella** y **Sbagliato** declaran un costo
+que no cuadra con sus propias dosis. El test `entities/receta/model.test.ts` deja la lista
+fijada; si el gerente corrige alguno, el test avisa.
 
 Si algo del negocio no está definido, **no lo inventes en silencio**: déjalo como
 `PLACEHOLDER` con comentario, o como aviso visible en la pantalla.
