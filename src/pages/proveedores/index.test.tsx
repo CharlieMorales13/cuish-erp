@@ -13,10 +13,10 @@ describe('<ProveedoresPage>', () => {
   it('marca a quién se le deben envases y deja en blanco a los demás', async () => {
     renderConProviders(<ProveedoresPage />)
 
-    const conCascos = (await screen.findByRole('cell', { name: /Modelo/ })).closest('tr')!
+    const conCascos = (await screen.findByRole('cell', { name: /Artesanal/ })).closest('tr')!
     expect(within(conCascos).getByText('10 sin devolver')).toBeInTheDocument()
 
-    const sinCascos = screen.getByRole('cell', { name: /La Noria/ }).closest('tr')!
+    const sinCascos = screen.getByRole('cell', { name: /Matatlán/ }).closest('tr')!
     expect(within(sinCascos).getByText('—')).toBeInTheDocument()
   })
 
@@ -31,7 +31,7 @@ describe('<ProveedoresPage>', () => {
     await user.click(within(dialogo).getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() =>
-      expect(db.proveedores.find((p) => p.id === 'PRV-01')!.telefono).toBe('951 000 0000'),
+      expect(db.proveedores.find((p) => p.id === 'PRV-03')!.telefono).toBe('951 000 0000'),
     )
   })
 

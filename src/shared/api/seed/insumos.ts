@@ -1,18 +1,26 @@
 import type { Insumo } from '../contracts'
 
-// Fuente: docs/productos, tabla "1. Insumos y costeo" (34 insumos, verbatim).
+// Catálogo alineado al de la base compartida (proyecto `dbcuish`, leído el 2026-09-12).
 //
-// Reglas confirmadas con el cliente:
-//   - caduca        : caduca todo MENOS el alcohol (destilados, licores, vinos, cervezas),
-//                     que por regla de negocio no se controla por caducidad. Se deriva de
-//                     la categoría, no se captura uno por uno.
-//   - piezasPorCaja : es el valor por defecto. La caja se define al momento de comprar,
-//                     porque el proveedor la cambia; la pantalla de recepción lo permite.
+// Los NOMBRES salen tal cual del POS. Lo que el POS no modela y el ERP sí, se agrega aquí:
 //
-// PLACEHOLDER, sin confirmar todavía:
-//   - esBotella     : se asumió para destilados, licores, vinos, salmuera y bitter
-//   - min / max     : se derivan de la presentación de compra (mín 1.5, máx 6) para no
-//                     inventar 68 números sueltos. Editables por insumo en la pantalla.
+//   - Qué producto es un INSUMO. En la base, los 44 productos tienen `es_insumo = false`,
+//     así que no hay nada que descontar. Aquí se marca lo que realmente se almacena.
+//   - La UNIDAD real. En la base todo está en `pz`, incluidas las botellas de 750 ml. Un
+//     trago de 2 oz no se puede restar de una pieza, así que los destilados y los graneles
+//     pasan a mililitros.
+//   - CONTROL POR LOTE y CADUCIDAD. En la base están apagados en los 44 productos, lo que
+//     dejaría sin piso los requisitos de lote, marbete, caducidad y copeo.
+//   - La PRESENTACIÓN DE COMPRA y su costo.
+//
+// Los insumos que no aparecen como producto en el POS se dedujeron de los nombres de sus
+// variantes de venta: "Margarita de Mezcal - Triple sec premium" implica que hay triple sec
+// en el almacén. Van marcados abajo.
+//
+// PLACEHOLDER — ningún costo viene de la base: `compra` y `compra_linea` están vacías y el
+// catálogo no guarda costo. Todos los costos de compra son estimados y hay que reemplazarlos
+// con una factura real.
+
 const MIN_PRESENTACIONES = 1.5
 const MAX_PRESENTACIONES = 6
 
@@ -32,43 +40,40 @@ type Fila = [
 ]
 
 const raw: Fila[] = [
-  ['INS-01', 'Mezcal', 'Destilados', 1000, 'ml', 150.0, true],
-  ['INS-02', 'Tequila', 'Destilados', 750, 'ml', 665.0, true],
-  ['INS-03', 'Ginebra Tanqueray', 'Destilados', 750, 'ml', 488.0, true],
-  ['INS-04', 'Vodka', 'Destilados', 750, 'ml', 299.0, true],
-  ['INS-05', 'Ron', 'Destilados', 700, 'ml', 195.0, true],
-  ['INS-06', 'Campari', 'Licores', 750, 'ml', 392.0, true],
-  ['INS-07', 'Aperol', 'Licores', 700, 'ml', 315.0, true],
-  ['INS-08', 'St-Germain', 'Licores', 750, 'ml', 705.0, true],
-  ['INS-09', 'Italicus', 'Licores', 700, 'ml', 990.0, true],
-  ['INS-10', 'Licor 43', 'Licores', 700, 'ml', 485.0, true],
-  ['INS-11', 'Licor de café', 'Licores', 1000, 'ml', 250.0, true],
-  ['INS-12', 'Licor de naranja', 'Licores', 1000, 'ml', 235.0, true],
-  ['INS-13', 'Vermouth rojo', 'Licores', 1000, 'ml', 569.0, true],
-  ['INS-14', 'Vermouth seco', 'Licores', 750, 'ml', 565.0, true],
-  ['INS-15', 'Vino tinto', 'Vinos', 750, 'ml', 150.0, true],
-  ['INS-16', 'Vino espumoso', 'Vinos', 750, 'ml', 188.0, true],
-  ['INS-17', 'Hielo', 'Perecederos', 5000, 'g', 24.0, false],
-  ['INS-18', 'Agua tónica', 'Mezcladores', 296, 'ml', 14.5, false, 24],
-  ['INS-19', 'Refresco Coca-Cola', 'Mezcladores', 355, 'ml', 13.33, false, 24],
-  ['INS-20', 'Agua mineral', 'Mezcladores', 600, 'ml', 16.0, false, 24],
-  ['INS-21', 'Salmuera Bordan', 'Mezcladores', 300, 'ml', 160.0, true],
-  ['INS-22', 'Bitter de Angostura', 'Mezcladores', 118, 'ml', 389.0, true],
-  ['INS-23', 'Jugo de tomate especiado', 'Mezcladores', 1000, 'ml', 42.0, false],
-  ['INS-24', 'Jarabe natural', 'Jarabes', 1000, 'ml', 24.0, false],
-  ['INS-25', 'Carga de espresso', 'Café', 1, 'carga', 12.0, false],
-  ['INS-26', 'Jugo de limón', 'Perecederos', 350, 'ml', 18.0, false],
-  ['INS-27', 'Limón eureka (garnitura)', 'Perecederos', 50, 'pz', 80.0, false],
-  ['INS-28', 'Jugo de toronja / gajo', 'Perecederos', 450, 'ml', 30.0, false],
-  ['INS-29', 'Naranja (garnitura)', 'Perecederos', 33, 'pz', 32.0, false],
-  ['INS-30', 'Hierbabuena', 'Perecederos', 10, 'porcion', 15.0, false],
-  ['INS-31', 'Aceituna gordal', 'Garnituras', 250, 'pz', 1240.0, false],
-  ['INS-32', 'Sal de mar', 'Secos', 1000, 'g', 25.0, false],
-  ['INS-33', 'Sal de gusano', 'Secos', 1000, 'g', 120.0, false],
-  ['INS-34', 'Popotes', 'Desechables', 50, 'pz', 30.0, false],
-  // Fuera de las 34 del costeo: el cliente confirmó que la cerveza se da de alta como un
-  // producto más. Presentación y costo son placeholder hasta ver una factura.
-  ['INS-35', 'Cerveza Modelo', 'Cervezas', 1, 'pz', 18.0, false, 24],
+  // --- Mezcales. Son producto del POS; aquí se les pone unidad real y control por lote ---
+  ['INS-01', 'Espadín Joven', 'Destilados', 750, 'ml', 250.0, true],
+  ['INS-02', 'Tobalá', 'Destilados', 750, 'ml', 500.0, true],
+  ['INS-03', 'Pechuga Artesanal', 'Destilados', 750, 'ml', 580.0, true],
+  // Deducido: lo nombra "Margarita de Mezcal - Mezcal reposado", pero no existe como producto
+  ['INS-04', 'Mezcal Reposado', 'Destilados', 750, 'ml', 320.0, true],
+
+  // --- Licores y preparados de barra. Todos deducidos de nombres de variantes ---
+  ['INS-05', 'Triple sec premium', 'Licores', 750, 'ml', 235.0, true],
+  ['INS-06', 'Rosita de cacao', 'Licores', 750, 'ml', 220.0, true],
+  ['INS-07', 'Fatwash de mezcal', 'Licores', 750, 'ml', 260.0, true],
+
+  // --- Cervezas. Cada presentación del POS es una partida distinta de almacén ---
+  ['INS-08', 'Cerveza Artesanal IPA - Botella 1 L', 'Cervezas', 1, 'pz', 60.0, false, 12],
+  ['INS-09', 'Cerveza Artesanal IPA - Lata 355 ml', 'Cervezas', 1, 'pz', 28.0, false, 24],
+  ['INS-10', 'Cerveza Clara - Lata 355 ml', 'Cervezas', 1, 'pz', 18.0, false, 24],
+  ['INS-11', 'Cerveza Stout - Lata 355 ml', 'Cervezas', 1, 'pz', 26.0, false, 24],
+
+  // --- Aguas de sol. Se venden por vaso y por jarra, así que se almacenan a granel ---
+  ['INS-12', 'Agua de sol Jamaica', 'Mezcladores', 1000, 'ml', 30.0, false],
+  ['INS-13', 'Agua de sol Tamarindo', 'Mezcladores', 1000, 'ml', 30.0, false],
+
+  // --- Bebidas embotelladas, se venden tal cual ---
+  ['INS-14', 'Agua mineral - Botella 355 ml', 'Mezcladores', 1, 'pz', 16.0, false, 24],
+  ['INS-15', 'Refresco - Lata 355 ml', 'Mezcladores', 1, 'pz', 13.0, false, 24],
+
+  // --- Insumos de coctelería, deducidos de los nombres de las variantes ---
+  ['INS-16', 'Jugo de limón', 'Perecederos', 350, 'ml', 18.0, false],
+  ['INS-17', 'Jugo de toronja', 'Perecederos', 450, 'ml', 30.0, false],
+  ['INS-18', 'Concentrado de jamaica', 'Jarabes', 1000, 'ml', 45.0, false],
+  ['INS-19', 'Orgeat', 'Jarabes', 750, 'ml', 180.0, false],
+  ['INS-20', 'Canela', 'Secos', 100, 'g', 45.0, false],
+  ['INS-21', 'Chile en polvo', 'Secos', 100, 'g', 35.0, false],
+  ['INS-22', 'Hielo', 'Perecederos', 5000, 'g', 24.0, false],
 ]
 
 export const INSUMOS: Insumo[] = raw.map(

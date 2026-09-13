@@ -56,7 +56,7 @@ describe('ingresar', () => {
   })
 
   it('guarda la caducidad de un insumo que sí caduca', () => {
-    const jarabe = insumo('INS-24')
+    const jarabe = insumo('INS-18') // Concentrado de jamaica
     expect(ingresar(jarabe, 1, jarabe.costoCompra, { caducidad: '2027-01-01' })[0].caducidad).toBe(
       '2027-01-01',
     )

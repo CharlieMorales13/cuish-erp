@@ -3,13 +3,14 @@ import { db } from '@/shared/api/db'
 import { renderConProviders, screen, userEvent, waitFor } from '@/shared/test/render'
 import { ModalEditarInsumo, insumoVacio } from './ui'
 
+/** INS-01 es Espadín Joven: botella de 750 ml, destilado, controla lote. */
 const mezcal = () => db.insumos.find((i) => i.id === 'INS-01')!
 
 describe('<ModalEditarInsumo>', () => {
   it('precarga los datos del insumo que se edita', () => {
     renderConProviders(<ModalEditarInsumo insumo={mezcal()} onCerrar={vi.fn()} />)
 
-    expect(screen.getByLabelText('Nombre')).toHaveValue('Mezcal')
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Espadín Joven')
     expect(screen.getByLabelText('Categoría')).toHaveValue('Destilados')
     expect(screen.getByLabelText('Unidad de uso')).toHaveValue('ml')
   })
@@ -61,7 +62,7 @@ describe('<ModalEditarInsumo>', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(onCerrar).toHaveBeenCalled())
-    expect(mezcal().costoUnitario).toBeCloseTo(200 / 1000, 6)
+    expect(mezcal().costoUnitario).toBeCloseTo(200 / 750, 6)
   })
 
   it('cancelar cierra sin tocar el catálogo', async () => {

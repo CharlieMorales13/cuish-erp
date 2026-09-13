@@ -3,10 +3,10 @@ import { Badge, Button, Cargando, DataTable, Page, type Columna } from '@/shared
 import { cantidad, money, moneyFino } from '@/shared/lib'
 import type { Insumo } from '@/shared/api/contracts'
 import { rendimiento, useInsumos } from '@/entities/insumo'
-import { CABALLITO_ML } from '@/shared/model/unidades'
+import { TRAGO_OZ, TRAGO_ML } from '@/shared/model/unidades'
 import { ModalEditarInsumo, insumoVacio } from '@/features/editar-insumo'
 
-/** El rendimiento por caballito solo tiene sentido en lo que se sirve derecho. */
+/** El rendimiento por trago solo tiene sentido en lo que se sirve derecho. */
 const esDestiladoEnMl = (i: Insumo) => i.esBotella && i.unidad === 'ml'
 
 export default function InsumosPage() {
@@ -52,12 +52,12 @@ export default function InsumosPage() {
         key: 'rinde',
         header: 'Rinde',
         align: 'right',
-        valor: (i) => (esDestiladoEnMl(i) ? rendimiento(i.presentacion, CABALLITO_ML) : 0),
+        valor: (i) => (esDestiladoEnMl(i) ? rendimiento(i.presentacion, TRAGO_ML) : 0),
         render: (i) =>
           esDestiladoEnMl(i) ? (
             <span className="tabular-nums">
-              {rendimiento(i.presentacion, CABALLITO_ML).toFixed(1)}{' '}
-              <span className="text-zinc-400">caballitos</span>
+              {rendimiento(i.presentacion, TRAGO_ML).toFixed(1)}{' '}
+              <span className="text-zinc-400">tragos de {TRAGO_OZ} oz</span>
             </span>
           ) : (
             <span className="text-zinc-300">—</span>

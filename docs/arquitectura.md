@@ -15,7 +15,7 @@ conectar la API sin reescribir nada del frontend.
 | --- | --- |
 | Pantallas operativas | **11** |
 | Requisitos funcionales implementados | **15 de 15** del alcance ERP |
-| Pruebas automatizadas | **240** |
+| Pruebas automatizadas | **248** |
 | Cobertura de código | **91.2%** sentencias · **91.3%** ramas |
 | Reglas de arquitectura verificadas por herramienta | **6 capas**, en cada commit |
 | Defectos encontrados y corregidos por la suite | **4** |
@@ -38,8 +38,8 @@ conectar la API sin reescribir nada del frontend.
 
 ### Datos e integración con el POS
 
-- **Base Postgres (Supabase) compartida** entre el POS y el ERP; el esquema es el contrato
-  formal entre los dos sistemas
+- **Base Postgres compartida** entre el POS y el ERP; el esquema es el contrato formal entre
+  los dos sistemas, independiente de dónde se hospede la instancia
 - Capa de datos **completamente aislada** detrás de las entidades: el frontend ya opera contra
   una implementación intercambiable, y conectar la API real no toca ningún componente
 - **Idempotencia garantizada**: el UUID de la venta lo genera el POS al capturar y el ERP lo
@@ -49,7 +49,7 @@ conectar la API sin reescribir nada del frontend.
 
 ### Ingeniería y calidad
 
-- **Vitest + Testing Library + jsdom**: 240 pruebas en tres niveles
+- **Vitest + Testing Library + jsdom**: 248 pruebas en tres niveles
 - **Umbrales de cobertura que detienen el build** si la calidad baja
 - **ESLint 9** con `eslint-plugin-boundaries`: reglas que hacen cumplir las capas de la
   arquitectura y el acceso por API pública de cada módulo
@@ -131,8 +131,8 @@ mezcalería:
   que el POS lo vende igual que un cóctel y el ERP le descuenta los mililitros exactos a la
   botella. El negocio mide en onzas y el inventario en mililitros; la conversión vive en un
   solo lugar.
-- **Rendimiento por botella**: el catálogo muestra cuántos caballitos salen de cada
-  presentación, que es el número con el que se administra una mezcalería.
+- **Rendimiento por botella**: el catálogo muestra cuántos tragos salen de cada presentación,
+  que es el número con el que se administra una mezcalería.
 - **Trazabilidad por marbete**: cada botella entra con su identificador único de fábrica.
 - **PEPS entre lotes**: el consumo toma primero la partida abierta más antigua.
 - **El inventario se descuenta al cerrar la cuenta**, no al capturar cada consumo. Esto no es
@@ -171,7 +171,7 @@ Los 15 requisitos funcionales del alcance ERP están implementados:
 
 ## 5. Calidad: qué demuestra la suite
 
-240 pruebas en tres niveles, todas ejecutándose en cada `push`:
+248 pruebas en tres niveles, todas ejecutándose en cada `push`:
 
 | Nivel | Qué verifica |
 | --- | --- |

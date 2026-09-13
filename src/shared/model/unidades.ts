@@ -13,9 +13,15 @@ export const mlAOnzas = (ml: number) => ml / ML_POR_ONZA
 export const onzasAMl = (onzas: number) => onzas * ML_POR_ONZA
 
 /**
- * Mililitros que sirve un caballito.
+ * Onzas que sirve un trago de destilado derecho.
  *
- * PLACEHOLDER: el cliente confirmó 45 ml "por mientras". Falta medir el caballito real y la
- * mezcalina, que todavía no tiene medida asignada.
+ * La carta del POS lo vende como "Trago 2 oz", así que ese es el valor que manda. El cliente
+ * nos había dado 45 ml para el caballito, que son 1.5 oz: son dos medidas distintas para el
+ * mismo servicio y falta resolver cuál es la real (ver docs/dudas.md, punto 2.1).
  */
+export const TRAGO_OZ = 2
+
+export const TRAGO_ML = onzasAMl(TRAGO_OZ)
+
+/** Medida provisional que dio el cliente para el caballito. Contradice el trago de 2 oz. */
 export const CABALLITO_ML = 45

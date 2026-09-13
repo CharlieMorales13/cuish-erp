@@ -96,14 +96,14 @@ export default function RecetasPage() {
       }
     >
       <Aviso tono="info">
-        Recetario vigente: el de la documentación del cliente. Estas recetas se administran desde
-        esta pantalla y son las que el POS consulta al cobrar.
+        Carta alineada al catálogo del POS: nombres, precios y variantes salen de ahí. Las{' '}
+        <strong>dosis de cada receta son provisionales</strong> — la base compartida no las trae,
+        así que hay que dosificarlas con el barman antes de costear en serio.
         {desviadas.length > 0 && (
           <>
             {' '}
             El sistema detectó {desviadas.length} receta{desviadas.length > 1 ? 's' : ''} cuyo costo
-            declarado difiere más de {pct(DESVIO_TOLERADO)} del que dan sus propias dosis. Están
-            marcadas en la columna de costo.
+            declarado difiere más de {pct(DESVIO_TOLERADO)} del que dan sus propias dosis.
           </>
         )}
       </Aviso>

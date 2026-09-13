@@ -20,22 +20,23 @@ describe('explotarVenta', () => {
   it('suma los ingredientes de varias recetas que comparten insumo', () => {
     const consumo = explotarVenta(
       venta([
-        { tipo: 'receta', refId: 'REC-08', cantidad: 2, precio: 0 }, // Gin & Tonic: 60 ml Tanqueray c/u
-        { tipo: 'receta', refId: 'REC-09', cantidad: 1, precio: 0 }, // Martini Seco: 60 ml Tanqueray
+        // Paloma con espadín (60 ml) y Cozana con espadín (60 ml): comparten el mezcal
+        { tipo: 'receta', refId: 'REC-27', cantidad: 2, precio: 0 },
+        { tipo: 'receta', refId: 'REC-15', cantidad: 1, precio: 0 },
       ]),
       recetas,
     )
-    expect(consumo['INS-03']).toBe(180)
-    expect(consumo['INS-31']).toBe(3) // una aceituna por trago
+    expect(consumo['INS-01']).toBe(180)
+    expect(consumo['INS-22']).toBe(180 * 2 + 150) // hielo de dos palomas y una cozana
   })
 
   it('multiplica por la cantidad de la línea', () => {
     const uno = explotarVenta(
-      venta([{ tipo: 'receta', refId: 'REC-14', cantidad: 1, precio: 0 }]),
+      venta([{ tipo: 'receta', refId: 'REC-21', cantidad: 1, precio: 0 }]),
       recetas,
     )
     const tres = explotarVenta(
-      venta([{ tipo: 'receta', refId: 'REC-14', cantidad: 3, precio: 0 }]),
+      venta([{ tipo: 'receta', refId: 'REC-21', cantidad: 3, precio: 0 }]),
       recetas,
     )
     for (const insumoId of Object.keys(uno)) {

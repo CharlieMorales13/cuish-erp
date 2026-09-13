@@ -1,6 +1,36 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+-- ---------------------------------------------------------------------------
+-- Tipos enumerados. El volcado original los dejaba como USER-DEFINED, sin sus
+-- valores. Extraídos de la base viva (proyecto dbcuish) el 2026-09-12.
+-- ---------------------------------------------------------------------------
+
+CREATE TYPE public.rol_usuario AS ENUM ('ADMIN', 'SUPERVISOR', 'CAJERO');
+
+CREATE TYPE public.unidad_medida AS ENUM ('ml', 'g', 'pz', 'oz', 'porcion', 'carga');
+
+CREATE TYPE public.tipo_presentacion AS ENUM (
+  'BOTELLA_CERRADA', 'BOTELLA_COPEO', 'INSUMO', 'COMPUESTO'
+);
+
+CREATE TYPE public.estado_lote AS ENUM ('CERRADO', 'ABIERTO', 'AGOTADO');
+
+CREATE TYPE public.estado_cuenta AS ENUM ('ABIERTA', 'CERRADA', 'CANCELADA');
+
+CREATE TYPE public.metodo_pago AS ENUM ('EFECTIVO', 'TARJETA', 'TRANSFERENCIA');
+
+CREATE TYPE public.tipo_movimiento AS ENUM (
+  'ENTRADA_COMPRA', 'SALIDA_VENTA', 'AJUSTE', 'MERMA', 'APERTURA_BOTELLA', 'CONTEO_FISICO'
+);
+
+-- Ojo: hay dos tipos para el mismo concepto y difieren en mayúsculas.
+-- `cuenta.tipo_atencion` usa tipo_punto_atencion; `punto_atencion` parece no usarse.
+CREATE TYPE public.tipo_punto_atencion AS ENUM ('MESA', 'BARRA');
+CREATE TYPE public.punto_atencion AS ENUM ('Mesa', 'Barra');
+
+-- ---------------------------------------------------------------------------
+
 CREATE TABLE public.usuario (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   nombre text NOT NULL,
