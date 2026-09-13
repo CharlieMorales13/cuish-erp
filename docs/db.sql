@@ -228,3 +228,28 @@ CREATE TABLE public.categoria_menu (
   activo boolean NOT NULL DEFAULT true,
   CONSTRAINT categoria_menu_pkey PRIMARY KEY (id)
 );
+-- ---------------------------------------------------------------------------
+-- Vistas. No venían en el volcado original; leídas de la base viva el 2026-09-13.
+-- Son la definición oficial de "existencia": se deriva del kardex, no se guarda.
+-- ---------------------------------------------------------------------------
+
+CREATE VIEW public.vw_existencia_producto AS
+  SELECT p.id AS producto_id, p.nombre, p.categoria, p.tipo, p.unidad_base,
+         COALESCE(sum(m.cantidad), 0::numeric) AS existencia,
+         p.stock_minimo, p.stock_maximo,
+         (p.stock_minimo IS NOT NULL
+          AND COALESCE(sum(m.cantidad), 0::numeric) <= p.stock_minimo) AS bajo_minimo
+    FROM producto p
+    LEFT JOIN movimiento_inventario m ON m.producto_id = p.id
+   WHERE p.activo
+   GROUP BY p.id, p.nombre, p.categoria, p.tipo, p.unidad_base,
+            p.stock_minimo, p.stock_maximo;
+
+CREATE VIEW public.vw_existencia_lote AS
+  SELECT l.id AS lote_id, l.producto_id, p.nombre AS producto,
+         l.marbete_id, l.estado, l.fecha_caducidad,
+         COALESCE(sum(m.cantidad), 0::numeric) AS existencia
+    FROM lote l
+    JOIN producto p ON p.id = l.producto_id
+    LEFT JOIN movimiento_inventario m ON m.lote_id = l.id
+   GROUP BY l.id, l.producto_id, p.nombre, l.marbete_id, l.estado, l.fecha_caducidad;

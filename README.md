@@ -21,14 +21,15 @@ El login es falso: cualquier usuario entra. Todo el estado se reinicia al recarg
 
 ```bash
 npm run check          # typecheck + lint + formato + tests. Esto es lo que hay que pasar
-npm run test           # 248 pruebas (vitest)
+npm run test           # 284 pruebas (vitest)
 npm run test:coverage  # con umbrales; falla si la cobertura baja
 npm run build          # build de producción + service worker
 npm run preview        # sirve el build (única forma de probar la PWA)
 ```
 
 Hooks de git (husky): `pre-commit` corre lint y formato, `commit-msg` exige Conventional
-Commits, `pre-push` corre typecheck y la suite completa.
+Commits, `pre-push` corre typecheck y la suite completa. Y GitHub Actions repite todo en cada
+pull request, porque los hooks se brincan con `--no-verify`.
 
 ## Qué hay
 
@@ -96,9 +97,9 @@ tabla de divergencias y lo que hay que decidir antes de construir la API están 
 
 ## Pruebas
 
-248 pruebas en tres niveles: lógica de dominio (funciones puras), integración de features
+284 pruebas en tres niveles: lógica de dominio (funciones puras), integración de features
 contra el servidor falso, y componentes de pantalla con Testing Library. La cobertura tiene
-umbrales que rompen el build si bajan (hoy 91.2% de sentencias, 91.3% de ramas).
+umbrales que rompen el build si bajan (hoy 91.9% de sentencias, 91.6% de ramas).
 
 Las pruebas consultan por rol y texto accesible, nunca por clase CSS ni `data-testid`: si un
 cambio rompe la accesibilidad, rompe las pruebas.

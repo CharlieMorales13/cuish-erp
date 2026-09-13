@@ -28,11 +28,17 @@ lado.
 > Actualizado el 2026-09-12 tras revisar la base viva (proyecto `dbcuish`). Dos dudas se
 > cerraron solas y apareció una mucho más grande.
 
-### 1.1 El POS y el ERP están modelando negocios distintos
+### 1.1 El catálogo cargado no coincide con el modelo de inventario
 
-**Es el hallazgo más importante del proyecto y hay que resolverlo antes que cualquier otra
-cosa.** Al conectarse a la base compartida, el catálogo cargado no se parece al que construyó
-el ERP, y tampoco al documento de costeo que entregó el cliente.
+> **Corregido el 2026-09-13.** La primera versión de este punto decía que el POS y el ERP
+> modelaban negocios distintos. Es más acotado que eso: **el esquema sí soporta el modelo del
+> ERP**. Existen la tabla `lote` con marbete y caducidad, el enum `estado_lote` con
+> `ABIERTO`/`CERRADO`, el tipo `BOTELLA_COPEO`, la unidad `oz`, las banderas `controla_lote` y
+> `controla_caducidad`, la receta versionada y hasta una vista `vw_existencia_lote` que suma
+> el kardex por lote. El diseño está. Lo que no coincide es **el dato cargado**.
+
+Al conectarse a la base compartida, el catálogo cargado no se parece al que construyó el ERP,
+y tampoco al documento de costeo que entregó el cliente.
 
 | | ERP (lo que construimos) | Base compartida (lo que cargó el POS) |
 | --- | --- | --- |
@@ -47,7 +53,16 @@ el ERP, y tampoco al documento de costeo que entregó el cliente.
 | Presentaciones de compra | una por insumo | tabla `producto_presentacion_compra` **vacía** |
 | Proveedores y compras | implementados | tablas **vacías** |
 
-**Qué implica, en concreto:**
+**El esquema ya resolvió dos cosas bien, y conviene adoptarlas:**
+
+- **La existencia se deriva del kardex, no se guarda.** Las vistas `vw_existencia_producto` y
+  `vw_existencia_lote` suman `movimiento_inventario`. Es el diseño correcto y es lo que el ERP
+  tiene que adoptar en el sprint de la API.
+- **La alerta de bajo mínimo ya está definida** en `vw_existencia_producto` como
+  `existencia <= stock_minimo`. El ERP usaba `<`, lo que hacía que en el mínimo exacto el POS
+  dijera "bajo mínimo" y el ERP "en rango". Ya se alineó al de la base.
+
+**Qué implica el dato cargado, en concreto:**
 
 - **Sin insumos y sin recetas no hay BOM.** El descuento por explosión de receta (RF-ERP-08)
   no tiene de dónde descontar: no existe ningún producto que sea ingrediente de otro.
@@ -66,14 +81,12 @@ recetas planas y conviene adoptarlo.
 
 **Lo que hay que decidir, y no es una decisión técnica:**
 
-1. **¿Cuál es el catálogo real del negocio?** ¿El del documento de costeo que nos entregaron,
-   el que cargó el POS, o ninguno de los dos porque ambos son datos de prueba?
-2. **¿El inventario se lleva por lote y por mililitro, o por pieza?** Es la diferencia entre un
-   ERP de inventario de bar y un contador de existencias. Todos los requisitos del alcance
-   asumen lo primero.
-3. **¿Quién carga el catálogo definitivo y cuándo?**
-
-**Hasta que esto se cierre, cualquier trabajo de API se construye sobre arena.**
+1. **¿El catálogo cargado es el definitivo o es dato de prueba?** El ERP ya se alineó a él,
+   pero si son productos de ejemplo, hay que cargar los reales.
+2. **¿Se encienden `controla_lote` y `controla_caducidad`?** Están apagados en los 44
+   productos. Sin eso se caen cuatro requisitos del alcance, aunque el esquema los soporte.
+3. **¿Quién marca qué productos son insumo y carga las recetas?** Son las dos piezas que hoy
+   no existen en la base y sin las cuales no hay nada que descontar.
 
 ---
 

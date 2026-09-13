@@ -15,8 +15,8 @@ conectar la API sin reescribir nada del frontend.
 | --- | --- |
 | Pantallas operativas | **11** |
 | Requisitos funcionales implementados | **15 de 15** del alcance ERP |
-| Pruebas automatizadas | **248** |
-| Cobertura de código | **91.2%** sentencias · **91.3%** ramas |
+| Pruebas automatizadas | **284** |
+| Cobertura de código | **91.9%** sentencias · **91.6%** ramas |
 | Reglas de arquitectura verificadas por herramienta | **6 capas**, en cada commit |
 | Defectos encontrados y corregidos por la suite | **4** |
 
@@ -49,11 +49,15 @@ conectar la API sin reescribir nada del frontend.
 
 ### Ingeniería y calidad
 
-- **Vitest + Testing Library + jsdom**: 248 pruebas en tres niveles
+- **Vitest + Testing Library + jsdom**: 284 pruebas en tres niveles
 - **Umbrales de cobertura que detienen el build** si la calidad baja
 - **ESLint 9** con `eslint-plugin-boundaries`: reglas que hacen cumplir las capas de la
   arquitectura y el acceso por API pública de cada módulo
 - **Prettier, Husky, lint-staged y commitlint** con Conventional Commits
+- **GitHub Actions**: tipos, lint, formato, cobertura y build en cada pull request
+- **Manejo de error en tres capas**: estado de consulta por pantalla, aviso global para las
+  acciones y límite de error para el render. Ninguna pantalla puede quedarse cargando para
+  siempre cuando la red falla
 - Compuertas automáticas: `pre-commit` (estilo y arquitectura), `commit-msg` (convención de
   mensajes), `pre-push` (tipos y suite completa)
 
@@ -171,7 +175,7 @@ Los 15 requisitos funcionales del alcance ERP están implementados:
 
 ## 5. Calidad: qué demuestra la suite
 
-248 pruebas en tres niveles, todas ejecutándose en cada `push`:
+284 pruebas en tres niveles, todas ejecutándose en cada `push` y en cada pull request:
 
 | Nivel | Qué verifica |
 | --- | --- |
