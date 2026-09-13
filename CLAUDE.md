@@ -19,14 +19,14 @@ backend todavía. El estado se reinicia al recargar la página.
 Lee los documentos de `docs/`. No están de adorno: casi toda decisión rara del código sale de
 ahí.
 
-| Documento                                         | Qué resuelve                                                             |
-| ------------------------------------------------- | ------------------------------------------------------------------------ |
-| `docs/context.md`                                 | Contexto de negocio, restricciones del cliente, pendientes sin respuesta |
-| `docs/db.sql`                                     | Esquema Postgres compartido con el POS. Es el contrato                   |
-| `docs/Requisitos del ERP por Módulo — Cuish *.md` | Requisitos con folio (RF-ERP-xx, RF-INT-xx)                              |
-| `docs/productos`                                  | Los 34 insumos costeados y las 18 recetas. Fuente de la semilla          |
-| `docs/roles.md`                                   | Roles del negocio (hoy el sistema solo implementa uno)                   |
-| `docs/libs.md`                                    | Librerías decididas al arrancar. Ver "Desvíos" abajo                     |
+| Documento                                         | Qué resuelve                                                                          |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `docs/context.md`                                 | Contexto de negocio, restricciones del cliente, pendientes sin respuesta              |
+| `docs/db.sql`                                     | Esquema Postgres compartido con el POS. Es el contrato                                |
+| `docs/Requisitos del ERP por Módulo — Cuish *.md` | Requisitos con folio (RF-ERP-xx, RF-INT-xx)                                           |
+| `docs/productos`                                  | Costeo inicial del cliente. **Ya no es la semilla**: el catálogo se alineó al del POS |
+| `docs/roles.md`                                   | Roles del negocio (hoy el sistema solo implementa uno)                                |
+| `docs/libs.md`                                    | Librerías decididas al arrancar. Ver "Desvíos" abajo                                  |
 
 Cuando toques una regla con folio, cítalo en el comentario: `// RF-ERP-09`. Así se rastrea
 qué código cumple qué requisito.
@@ -104,7 +104,7 @@ Formato de commit: `tipo(scope): descripción`. El scope conviene que sea la reb
 
 ## Pruebas
 
-`vitest` + `@testing-library/react` + jsdom. 240 pruebas.
+`vitest` + `@testing-library/react` + jsdom. 248 pruebas.
 
 - `resetDb()` corre antes de cada prueba: siempre se parte de la misma semilla.
 - Componentes: `renderConProviders` de `@/shared/test/render` (QueryClient + router).
@@ -118,35 +118,34 @@ maquetado. El nombre de la prueba debe decir qué regla protege.
 
 ## Datos: qué es real y qué es inventado
 
-Real, verbatim de `docs/productos`: los 34 insumos con presentación y costo, y las 18 recetas
-con cristalería, método, garnitura, costo declarado y precio.
+**El catálogo sale de la base compartida** (proyecto `dbcuish`), no del documento de costeo
+inicial. Nombres, precios, variantes y categorías de menú son del POS y no se inventan ni se
+cambian. Lo que el POS no modela y este repo sí: qué producto es insumo, la unidad real,
+control por lote, caducidad, el BOM y los costos.
 
-Confirmado con el cliente (ya aplicado en el código, no lo vuelvas a preguntar):
+Confirmado con el cliente (ya aplicado, no lo vuelvas a preguntar):
 
-- Recetario vigente = el de `docs/productos`; se administra desde el CRUD de Recetas.
 - Caduca todo **menos el alcohol**. Se deriva de la categoría en `seed/insumos.ts`.
 - El tamaño de la caja lo define el proveedor al comprar; el catálogo solo sugiere.
-- La cerveza es un producto más del catálogo (`INS-35`).
 - La requisición la autoriza el usuario del ERP que la crea, y guarda su nombre.
-- Las bebidas se miden en **onzas**; el caballito son **45 ml** (`CABALLITO_ML`). El copeo se
-  modela como receta de un solo ingrediente, no como un mecanismo aparte.
+- Las bebidas se miden en **onzas**. La carta del POS vende el derecho como "Trago 2 oz"
+  (`TRAGO_OZ`), y el copeo se modela como receta de un solo ingrediente.
 
-Inventado y marcado con `PLACEHOLDER`: mínimos y máximos, dosis de garnitura, proveedores,
-lotes, marbetes, existencias iniciales, compras, conteos, ventas, y el costo de la cerveza.
-**No los presentes como reales.**
+Inventado y marcado con `PLACEHOLDER`: **todos los costos de compra** y **todas las dosis de
+las recetas**, más mínimos y máximos, proveedores, lotes, marbetes, existencias iniciales,
+compras, conteos y ventas. **No los presentes como reales.**
 
 ## Pendientes abiertos con el cliente
 
-Tres, y los tres bloquean funcionalidad:
+Cinco, en orden de gravedad:
 
-1. **Medida real del caballito y de la mezcalina.** 45 ml es provisional; la mezcalina no
-   tiene medida, así que su servicio no existe todavía.
-2. **Precio de venta del copeo.** Hoy va en 0 y la pantalla lo marca "sin precio".
-3. **Mínimos y máximos reales.** Hoy derivados de la presentación (1.5 / 6).
-
-Más un hallazgo que el sistema detecta solo: **Centella** y **Sbagliato** declaran un costo
-que no cuadra con sus propias dosis. El test `entities/receta/model.test.ts` deja la lista
-fijada; si el gerente corrige alguno, el test avisa.
+1. **El POS y el ERP modelan negocios distintos.** Es el punto 1.1 de `docs/dudas.md` y es el
+   más grave: la base lleva todo por pieza y sin lotes, el alcance del ERP asume lote y
+   mililitro. Hasta cerrarlo, la API se construye sobre arena.
+2. **Cuánto sirve un trago.** La carta dice 2 oz, el cliente dijo 45 ml.
+3. **Las dosis de cada receta**, con el barman.
+4. **Los costos de compra reales**, con una factura.
+5. **Mínimos y máximos reales.** Hoy derivados de la presentación (1.5 / 6).
 
 Si algo del negocio no está definido, **no lo inventes en silencio**: déjalo como
 `PLACEHOLDER` con comentario, o como aviso visible en la pantalla.

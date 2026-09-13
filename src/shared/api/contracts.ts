@@ -68,6 +68,14 @@ export interface RecetaIngrediente {
 export interface Receta {
   id: string
   nombre: string
+  /**
+   * Producto padre del que esta receta es variante, como `producto_padre_id` en la BD.
+   * El POS vende "Margarita de Mezcal" en cuatro versiones con precio distinto; agruparlas
+   * bajo un padre es más fiel a la carta que tratarlas como recetas sueltas.
+   */
+  padre?: string
+  /** Categoría de la carta a la que pertenece. Espeja `categoria_menu`. */
+  categoriaMenu?: string
   cristaleria: string
   metodo: string
   garnitura: string

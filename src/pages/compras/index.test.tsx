@@ -56,7 +56,7 @@ describe('<ComprasPage>', () => {
   it('muestra cuánto entra al almacén por cada partida, ya convertido', async () => {
     renderConProviders(<ComprasPage />)
     const tarjeta = await tarjetaDe('CMP-001')
-    // 24 latas de Coca de 355 ml
-    expect(within(tarjeta).getByText('8,520 ml')).toBeInTheDocument()
+    // 12 botellas de IPA de 1 L, que se almacenan por pieza
+    expect(within(tarjeta).getByText('12 pz')).toBeInTheDocument()
   })
 })

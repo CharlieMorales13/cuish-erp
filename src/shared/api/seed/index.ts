@@ -2,30 +2,31 @@ import type { Compra, Conteo, Lote, Movimiento, Proveedor, Venta } from '../cont
 import { INSUMOS } from './insumos'
 import { COCTELES, RECETAS } from './recetas'
 
-// PLACEHOLDER: proveedores, existencias iniciales, lotes, marbetes, compras, conteos
-// y ventas son inventados. Ningún documento del cliente los trae. Sustituir con el
-// inventario inicial real antes del arranque productivo (RF-ERP-01).
+// PLACEHOLDER: proveedores, existencias iniciales, lotes, marbetes, compras, conteos y
+// ventas son inventados. La base compartida los tiene vacíos (`lote`, `compra`, `proveedor`
+// y `producto_presentacion_compra` están en cero filas), así que no hay de dónde sacarlos.
+// Sustituir con el inventario inicial real antes del arranque productivo (RF-ERP-01).
 
 export const PROVEEDORES: Proveedor[] = [
   {
     id: 'PRV-01',
-    nombre: 'Distribuidora La Noria',
-    contacto: 'Elena Ruiz',
-    telefono: '951 512 3344',
+    nombre: 'Mezcales de Santiago Matatlán',
+    contacto: 'Doña Rufina',
+    telefono: '951 588 2211',
     cascosPrestados: 0,
   },
   {
     id: 'PRV-02',
-    nombre: 'Cervecería Modelo Oaxaca',
+    nombre: 'Cervecería Artesanal Oaxaca',
     contacto: 'Sergio Nava',
     telefono: '951 514 8890',
     cascosPrestados: 10,
   },
   {
     id: 'PRV-03',
-    nombre: 'Mezcales de Santiago Matatlán',
-    contacto: 'Doña Rufina',
-    telefono: '951 588 2211',
+    nombre: 'Distribuidora La Noria',
+    contacto: 'Elena Ruiz',
+    telefono: '951 512 3344',
     cascosPrestados: 0,
   },
   {
@@ -121,38 +122,49 @@ export const MOVIMIENTOS: Movimiento[] = LOTES.slice(0, 24).map((lote, i) => ({
 
 export const COMPRAS: Compra[] = [
   {
+    // Cervezas: aquí es donde aparecen los envases prestados.
     id: 'CMP-001',
     folio: 'CMP-001',
     proveedorId: 'PRV-02',
     fecha: fecha(6),
     estado: 'recibida',
+    usuario: 'Gerente',
     lineas: [
-      { insumoId: 'INS-19', presentaciones: 24, costoCompra: 13.33 },
-      { insumoId: 'INS-20', presentaciones: 24, costoCompra: 16.0 },
+      { insumoId: 'INS-09', presentaciones: 48, costoCompra: 28.0 },
+      { insumoId: 'INS-10', presentaciones: 48, costoCompra: 18.0 },
+      { insumoId: 'INS-08', presentaciones: 12, costoCompra: 60.0 },
     ],
     cascosPrestados: 10,
     cascosDevueltos: 0,
   },
   {
+    // Mezcal del palenque, que es lo que mueve el negocio.
     id: 'CMP-002',
     folio: 'CMP-002',
-    proveedorId: 'PRV-03',
+    proveedorId: 'PRV-01',
     fecha: fecha(3),
     estado: 'recibida',
-    lineas: [{ insumoId: 'INS-01', presentaciones: 6, costoCompra: 150 }],
+    usuario: 'Gerente',
+    lineas: [
+      { insumoId: 'INS-01', presentaciones: 6, costoCompra: 250.0 },
+      { insumoId: 'INS-02', presentaciones: 2, costoCompra: 500.0 },
+      { insumoId: 'INS-03', presentaciones: 2, costoCompra: 580.0 },
+    ],
     cascosPrestados: 0,
     cascosDevueltos: 0,
   },
   {
+    // Requisición abierta de insumos de barra.
     id: 'CMP-003',
     folio: 'CMP-003',
-    proveedorId: 'PRV-01',
+    proveedorId: 'PRV-03',
     fecha: fecha(0),
     estado: 'requisicion',
+    usuario: 'Gerente',
     lineas: [
-      { insumoId: 'INS-09', presentaciones: 2, costoCompra: 990 },
-      { insumoId: 'INS-08', presentaciones: 2, costoCompra: 705 },
-      { insumoId: 'INS-16', presentaciones: 12, costoCompra: 188 },
+      { insumoId: 'INS-05', presentaciones: 2, costoCompra: 235.0 },
+      { insumoId: 'INS-19', presentaciones: 2, costoCompra: 180.0 },
+      { insumoId: 'INS-06', presentaciones: 1, costoCompra: 220.0 },
     ],
     cascosPrestados: 0,
     cascosDevueltos: 0,
@@ -160,13 +172,8 @@ export const COMPRAS: Compra[] = [
 ]
 
 const recetas = Object.fromEntries(RECETAS.map((r) => [r.id, r]))
-const cuentas = [
-  'Barra principal 1',
-  'Barra principal 2',
-  'Barra pared 1',
-  'Mesa 1',
-  'Barra pared 2',
-]
+// `cuenta.tipo_atencion` en la base solo acepta MESA o BARRA.
+const cuentas = ['Barra 1', 'Barra 2', 'Barra 3', 'Mesa 1', 'Barra 4']
 
 // Ventas ya recibidas del POS. `aplicada: false` = pendiente de descontar inventario,
 // que es lo que el ERP hace al cerrar la cuenta (RF-ERP-11).

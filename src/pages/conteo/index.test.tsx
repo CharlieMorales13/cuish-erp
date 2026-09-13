@@ -30,7 +30,7 @@ describe('<ConteoPage>', () => {
     const teorico = existencia(db.lotes, 'INS-01').total
 
     // El nombre del insumo llega en su propia query; hasta entonces la fila se rotula con el id.
-    const campo = await screen.findByLabelText('Existencia física de Mezcal')
+    const campo = await screen.findByLabelText('Existencia física de Espadín Joven')
     await user.type(campo, String(teorico - 50))
 
     expect(await screen.findByText(/1 insumo con diferencia/)).toBeInTheDocument()
@@ -41,7 +41,7 @@ describe('<ConteoPage>', () => {
     const teorico = existencia(db.lotes, 'INS-01').total
 
     await user.type(
-      await screen.findByLabelText('Existencia física de Mezcal'),
+      await screen.findByLabelText('Existencia física de Espadín Joven'),
       String(teorico - 50),
     )
     await user.click(screen.getByRole('button', { name: 'Cerrar y ajustar' }))

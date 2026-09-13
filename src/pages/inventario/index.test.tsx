@@ -20,7 +20,7 @@ describe('<InventarioPage>', () => {
   it('separa botella cerrada de copeo, y deja en blanco lo que no es botella', async () => {
     renderConProviders(<InventarioPage />)
 
-    const mezcal = await filaDe('Mezcal') // esBotella: true
+    const mezcal = await filaDe('Espadín Joven') // esBotella: true
     expect(within(mezcal).getAllByRole('cell')[3]).not.toHaveTextContent('—')
 
     const hielo = await filaDe('Hielo') // esBotella: false
@@ -31,7 +31,7 @@ describe('<InventarioPage>', () => {
     db.lotes = db.lotes.filter((l) => l.insumoId !== 'INS-01')
     renderConProviders(<InventarioPage />)
 
-    const mezcal = await filaDe('Mezcal')
+    const mezcal = await filaDe('Espadín Joven')
     expect(within(mezcal).getByText('Agotado')).toBeInTheDocument()
   })
 
@@ -50,7 +50,7 @@ describe('<InventarioPage>', () => {
 
     renderConProviders(<InventarioPage />)
 
-    const mezcal = await filaDe('Mezcal')
+    const mezcal = await filaDe('Espadín Joven')
     expect(within(mezcal).getByText('Bajo mínimo')).toBeInTheDocument()
   })
 

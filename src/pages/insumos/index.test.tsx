@@ -20,19 +20,19 @@ describe('<InsumosPage>', () => {
   it('marca qué insumos se controlan por copeo y cuáles caducan', async () => {
     renderConProviders(<InsumosPage />)
 
-    const mezcal = (await screen.findByRole('cell', { name: 'Mezcal' })).closest('tr')!
+    const mezcal = (await screen.findByRole('cell', { name: 'Espadín Joven' })).closest('tr')!
     expect(within(mezcal).getByText('copeo')).toBeInTheDocument()
 
-    const jarabe = screen.getByRole('cell', { name: 'Jarabe natural' }).closest('tr')!
+    const jarabe = screen.getByRole('cell', { name: 'Concentrado de jamaica' }).closest('tr')!
     expect(within(jarabe).getByText('caduca')).toBeInTheDocument()
   })
 
-  it('dice cuántos caballitos rinde una botella', async () => {
+  it('dice cuántos tragos rinde una botella', async () => {
     renderConProviders(<InsumosPage />)
 
-    // 1,000 ml de mezcal a 45 ml por caballito
-    const mezcal = (await screen.findByRole('cell', { name: 'Mezcal' })).closest('tr')!
-    expect(within(mezcal).getByText(/22\.2/)).toBeInTheDocument()
+    // 750 ml de Espadín a 2 oz (59.15 ml) por trago
+    const mezcal = (await screen.findByRole('cell', { name: 'Espadín Joven' })).closest('tr')!
+    expect(within(mezcal).getByText(/12\.7/)).toBeInTheDocument()
 
     // lo que no se sirve derecho no rinde caballitos
     const hielo = screen.getByRole('cell', { name: 'Hielo' }).closest('tr')!
@@ -43,16 +43,16 @@ describe('<InsumosPage>', () => {
     const user = userEvent.setup()
     renderConProviders(<InsumosPage />)
 
-    await user.click(await screen.findByRole('cell', { name: 'Mezcal' }))
-    expect(await screen.findByRole('dialog', { name: 'Editar Mezcal' })).toBeInTheDocument()
+    await user.click(await screen.findByRole('cell', { name: 'Espadín Joven' }))
+    expect(await screen.findByRole('dialog', { name: 'Editar Espadín Joven' })).toBeInTheDocument()
   })
 
   it('la búsqueda filtra el catálogo', async () => {
     const user = userEvent.setup()
     renderConProviders(<InsumosPage />)
 
-    await user.type(await screen.findByLabelText('Buscar en la tabla'), 'vermouth')
+    await user.type(await screen.findByLabelText('Buscar en la tabla'), 'agua de sol')
     const tabla = screen.getByRole('table', { name: 'Catálogo de insumos' })
-    expect(within(tabla).getAllByRole('row')).toHaveLength(3) // encabezado + rojo + seco
+    expect(within(tabla).getAllByRole('row')).toHaveLength(3) // encabezado + jamaica + tamarindo
   })
 })

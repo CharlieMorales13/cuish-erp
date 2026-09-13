@@ -7,16 +7,17 @@ import { DESVIO_TOLERADO, costoReceta, desvioCosto, margen } from './model'
 const insumos = byId(INSUMOS)
 
 describe('costoReceta', () => {
-  it('reproduce el costo del recetario del cliente dentro del 10%', () => {
-    const fuera = RECETAS.filter((r) => desvioCosto(costoReceta(r, insumos), r.costoDoc) > 0.1).map(
-      (r) => r.nombre,
-    )
+  it('toda receta de la carta cuesta algo', () => {
+    const sinCosto = RECETAS.filter((r) => costoReceta(r, insumos) <= 0).map((r) => r.nombre)
+    expect(sinCosto).toEqual([])
+  })
 
-    // Las dos que quedan fuera son hallazgos para el gerente, no bugs de este cálculo:
-    //   Centella  — el recetario cobra ~$7.70 de garnitura que no dosifica.
-    //   Sbagliato — el recetario declara $43.35 y sus propias dosis dan ~$48.91.
-    // Si el gerente corrige alguna de las dos, esta lista se achica.
-    expect(fuera).toEqual(['Centella', 'Sbagliato'])
+  it('el catálogo del POS no declara costo, así que no hay nada que contrastar todavía', () => {
+    // `costoDoc` viene en cero porque la base compartida no guarda costo de producción.
+    // Cuando el cliente entregue su costeo, el contraste vuelve a tener sentido y el badge
+    // de desviación de la pantalla de Recetas se enciende solo.
+    expect(RECETAS.every((r) => r.costoDoc === 0)).toBe(true)
+    expect(RECETAS.every((r) => desvioCosto(costoReceta(r, insumos), r.costoDoc) === 0)).toBe(true)
   })
 
   it('suma cantidad por costo unitario de cada ingrediente', () => {
@@ -29,11 +30,11 @@ describe('costoReceta', () => {
       precio: 0,
       costoDoc: 0,
       ingredientes: [
-        { insumoId: 'INS-01', cantidad: 100 }, // mezcal, $0.15/ml
-        { insumoId: 'INS-17', cantidad: 200 }, // hielo, $0.0048/g
+        { insumoId: 'INS-01', cantidad: 100 }, // Espadín Joven, $250 / 750 ml
+        { insumoId: 'INS-22', cantidad: 200 }, // Hielo, $24 / 5000 g
       ],
     }
-    expect(costoReceta(receta, insumos)).toBeCloseTo(100 * 0.15 + 200 * (24 / 5000), 6)
+    expect(costoReceta(receta, insumos)).toBeCloseTo(100 * (250 / 750) + 200 * (24 / 5000), 6)
   })
 
   it('ignora ingredientes cuyo insumo ya no existe en el catálogo', () => {
@@ -50,7 +51,7 @@ describe('costoReceta', () => {
         { insumoId: 'BORRADO', cantidad: 999 },
       ],
     }
-    expect(costoReceta(receta, insumos)).toBeCloseTo(15, 6)
+    expect(costoReceta(receta, insumos)).toBeCloseTo(100 * (250 / 750), 6)
   })
 })
 
