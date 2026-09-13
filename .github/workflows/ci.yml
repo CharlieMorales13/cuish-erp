@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Un push nuevo a la misma rama cancela la corrida anterior: no tiene caso
+# gastar minutos validando un commit que ya quedó atrás.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Tipos, estilo y pruebas
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Cada verificación va en su propio paso para que GitHub diga cuál falló
+      # sin tener que abrir el log completo.
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Reglas de código y fronteras de arquitectura
+        run: npm run lint
+
+      - name: Formato
+        run: npm run format:check
+
+      - name: Pruebas y cobertura
+        run: npm run test:coverage
+
+      - name: Build de producción
+        run: npm run build
