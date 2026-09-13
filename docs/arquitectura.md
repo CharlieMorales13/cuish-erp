@@ -38,8 +38,8 @@ conectar la API sin reescribir nada del frontend.
 
 ### Datos e integración con el POS
 
-- **Base Postgres (Supabase) compartida** entre el POS y el ERP; el esquema es el contrato
-  formal entre los dos sistemas
+- **Base Postgres compartida** entre el POS y el ERP; el esquema es el contrato formal entre
+  los dos sistemas, independiente de dónde se hospede la instancia
 - Capa de datos **completamente aislada** detrás de las entidades: el frontend ya opera contra
   una implementación intercambiable, y conectar la API real no toca ningún componente
 - **Idempotencia garantizada**: el UUID de la venta lo genera el POS al capturar y el ERP lo

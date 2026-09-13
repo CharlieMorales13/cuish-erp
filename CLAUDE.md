@@ -8,7 +8,8 @@ ERP de inventario para **Cuish**, mezcalería y coctelería en Oaxaca. Solo el �
 tragos, cócteles y mezcal en copeo. Sin alimentos, sin nada fiscal.
 
 **El POS es otro repositorio, de otro miembro del equipo.** Este repo es solo el ERP. Los dos
-comparten una base Postgres (Supabase) cuyo esquema vive en `docs/db.sql`.
+comparten una base Postgres cuyo esquema vive en `docs/db.sql`. Dónde se hospeda esa
+instancia todavía se está decidiendo; el esquema es el contrato y no depende de eso.
 
 Hoy el frontend corre contra un **servidor falso en memoria** (`src/shared/api/db.ts`). No hay
 backend todavía. El estado se reinicia al recargar la página.

@@ -89,7 +89,7 @@ pensada para moverse tal cual al backend cuando se defina, así las reglas de in
 escriben dos veces. Lo mismo con los esquemas Zod: validan el formulario hoy y el request
 mañana.
 
-La base Postgres (Supabase) se comparte con el POS y su esquema está en
+La base Postgres se comparte con el POS y su esquema está en
 [`docs/db.sql`](docs/db.sql). El modelo del frontend **todavía no está alineado con él**: la
 tabla de divergencias y lo que hay que decidir antes de construir la API están en
 [`docs/arquitectura.md`](docs/arquitectura.md).
