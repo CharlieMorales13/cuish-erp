@@ -1,5 +1,7 @@
 export { Button, type Variante } from './button'
-export { Card, Page, Badge, Aviso, Stat, Cargando, tonos, type Tono } from './superficies'
+export { Card, Page, Badge, Aviso, Stat, tonos, type Tono } from './superficies'
+export { Cargando, PanelError, EstadoConsulta, type EstadoDeConsulta } from './estado'
 export { Field, Input, Select, Textarea, control } from './form'
 export { Modal } from './modal'
+export { AvisosDeAccion } from './avisos'
 export { DataTable, ordenar, filtrar, type Columna } from './data-table'

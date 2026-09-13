@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Badge, Button, Cargando, DataTable, Page, type Columna } from '@/shared/ui'
+import { Badge, Button, EstadoConsulta, DataTable, Page, type Columna } from '@/shared/ui'
 import { cantidad, fechaConHora } from '@/shared/lib'
 import type { Movimiento } from '@/shared/api/contracts'
 import { TONO_MOVIMIENTO, useMovimientos } from '@/entities/movimiento'
@@ -7,7 +7,8 @@ import { useInsumosById } from '@/entities/insumo'
 import { ModalRegistrarMovimiento } from '@/features/registrar-movimiento'
 
 export default function MovimientosPage() {
-  const { data: movimientos } = useMovimientos()
+  const consultaMovimientos = useMovimientos()
+  const movimientos = consultaMovimientos.data
   const insumos = useInsumosById()
   const [manual, setManual] = useState(false)
 
@@ -66,7 +67,7 @@ export default function MovimientosPage() {
     [insumos],
   )
 
-  if (!movimientos) return <Cargando />
+  if (!movimientos) return <EstadoConsulta consultas={[consultaMovimientos]} />
 
   return (
     <Page

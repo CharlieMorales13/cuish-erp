@@ -1,4 +1,5 @@
 import { sembrarVentasAplicadas } from '@/features/aplicar-venta'
+import { ErrorBoundary } from './error-boundary'
 import { Providers } from './providers'
 import { Router } from './router'
 import './index.css'
@@ -9,8 +10,10 @@ sembrarVentasAplicadas()
 
 export function App() {
   return (
-    <Providers>
-      <Router />
-    </Providers>
+    <ErrorBoundary>
+      <Providers>
+        <Router />
+      </Providers>
+    </ErrorBoundary>
   )
 }

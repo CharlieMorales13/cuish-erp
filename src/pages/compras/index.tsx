@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Aviso, Badge, Button, Card, Cargando, Page } from '@/shared/ui'
+import { Aviso, Badge, Button, Card, EstadoConsulta, Page } from '@/shared/ui'
 import { cantidad, fecha, money } from '@/shared/lib'
 import { cascosPendientes, cascosVivos, totalCompra, useCompras } from '@/entities/compra'
 import { useProveedores } from '@/entities/proveedor'
@@ -9,14 +9,17 @@ import { useRecibirCompra } from '@/features/recibir-mercancia'
 import { useDevolverCascos } from '@/features/devolver-cascos'
 
 export default function ComprasPage() {
-  const { data: compras } = useCompras()
-  const { data: proveedores } = useProveedores()
+  const consultaCompras = useCompras()
+  const consultaProveedores = useProveedores()
+  const compras = consultaCompras.data
+  const proveedores = consultaProveedores.data
   const insumos = useInsumosById()
   const recibir = useRecibirCompra()
   const devolver = useDevolverCascos()
   const [alta, setAlta] = useState(false)
 
-  if (!compras || !proveedores) return <Cargando />
+  if (!compras || !proveedores)
+    return <EstadoConsulta consultas={[consultaCompras, consultaProveedores]} />
 
   const pendientes = cascosVivos(compras)
 

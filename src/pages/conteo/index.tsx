@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { Badge, Button, Card, Cargando, Page } from '@/shared/ui'
+import { Badge, Button, Card, EstadoConsulta, Page } from '@/shared/ui'
 import { fechaConHora } from '@/shared/lib'
 import { avance, useConteos } from '@/entities/conteo'
 import { CapturaConteo, useCrearConteo } from '@/features/capturar-conteo'
 
 export default function ConteoPage() {
-  const { data: conteos } = useConteos()
+  const consultaConteos = useConteos()
+  const conteos = consultaConteos.data
   const crear = useCrearConteo()
   const [activoId, setActivoId] = useState<string | null>(null)
 
-  if (!conteos) return <Cargando />
+  if (!conteos) return <EstadoConsulta consultas={[consultaConteos]} />
 
   const activo = conteos.find((c) => c.id === activoId) ?? null
 

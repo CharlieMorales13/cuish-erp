@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Aviso, Badge, Button, Card, Cargando, Modal, Page, Stat } from '@/shared/ui'
+import { Aviso, Badge, Button, Card, EstadoConsulta, Modal, Page, Stat } from '@/shared/ui'
 import { byId, cantidad, fechaConHora, money } from '@/shared/lib'
 import type { Venta } from '@/shared/api/contracts'
 import { pendientesDeAplicar, productosEnTicket, totalVentas, useVentas } from '@/entities/venta'
@@ -8,14 +8,16 @@ import { useInsumosById } from '@/entities/insumo'
 import { explotarVenta, useAplicarVenta, type Faltante } from '@/features/aplicar-venta'
 
 export default function VentasPage() {
-  const { data: ventas } = useVentas()
-  const { data: recetas } = useRecetas()
+  const consultaVentas = useVentas()
+  const consultaRecetas = useRecetas()
+  const ventas = consultaVentas.data
+  const recetas = consultaRecetas.data
   const insumos = useInsumosById()
   const aplicar = useAplicarVenta()
   const [detalle, setDetalle] = useState<Venta | null>(null)
   const [faltantes, setFaltantes] = useState<Faltante[]>([])
 
-  if (!ventas || !recetas) return <Cargando />
+  if (!ventas || !recetas) return <EstadoConsulta consultas={[consultaVentas, consultaRecetas]} />
 
   const pendientes = pendientesDeAplicar(ventas)
   const nombreDe = (id: string) => insumos[id]?.nombre ?? id

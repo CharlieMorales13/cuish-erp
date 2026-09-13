@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { NavLink, Navigate, useNavigate } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
-import { Button } from '@/shared/ui'
+import { AvisosDeAccion, Button } from '@/shared/ui'
 import { cn } from '@/shared/lib'
 import { cerrarSesion, usuarioActual } from '@/features/auth'
 import { NAVEGACION } from './rutas'
@@ -54,6 +54,7 @@ export function LayoutErp({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <main className="min-w-0 flex-1 p-6">{children}</main>
+      <AvisosDeAccion />
     </div>
   )
 }
