@@ -3,6 +3,7 @@ import { Aviso, Badge, EstadoConsulta, DataTable, Page, type Columna, type Tono 
 import { cantidad, money } from '@/shared/lib'
 import type { Insumo } from '@/shared/api/contracts'
 import {
+  bajoMinimo,
   estadoExistencia,
   useInsumos,
   valorInventario,
@@ -96,7 +97,7 @@ export default function InventarioPage() {
   if (!insumos || !existencias)
     return <EstadoConsulta consultas={[consultaInsumos, consultaExistencias]} />
 
-  const bajos = insumos.filter((i) => existencias[i.id].total < i.min).length
+  const bajos = insumos.filter((i) => bajoMinimo(existencias[i.id], i)).length
 
   return (
     <Page

@@ -8,7 +8,3 @@ export function mensajeDeError(error: unknown): string {
   if (typeof error === 'string' && error.trim()) return error
   return 'Ocurrió un error inesperado.'
 }
-
-/** Errores que no tiene caso reintentar porque el problema está en lo que se pidió. */
-export const esErrorDeDatos = (error: unknown) =>
-  error instanceof Error && /desconocid[oa]/i.test(error.message)

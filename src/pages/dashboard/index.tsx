@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Aviso, EstadoConsulta, Page, Stat } from '@/shared/ui'
 import { money } from '@/shared/lib'
 import { useExistencias, useLotes } from '@/entities/lote'
-import { useInsumos, valorInventario } from '@/entities/insumo'
+import { bajoMinimo, useInsumos, valorInventario } from '@/entities/insumo'
 import { acumularPorInsumo, useMovimientos } from '@/entities/movimiento'
 import { pendientesDeAplicar, useVentas } from '@/entities/venta'
 import { GraficaCosto, type BarraCosto } from '@/widgets/grafica-costo'
@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
     return {
       valor: valorInventario(insumos, existencias),
-      bajos: insumos.filter((i) => existencias[i.id].total < i.min),
+      bajos: insumos.filter((i) => bajoMinimo(existencias[i.id], i)),
       porCaducar: lotesPorCaducar(lotes),
       consumo: top(acumularPorInsumo(movimientos, 'venta')),
       merma: top(acumularPorInsumo(movimientos, 'merma')),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { esErrorDeDatos, mensajeDeError } from './errores'
+import { mensajeDeError } from './errores'
 
 describe('mensajeDeError', () => {
   it('usa el mensaje del Error', () => {
@@ -16,16 +16,4 @@ describe('mensajeDeError', () => {
       expect(mensajeDeError(valor)).toBe('Ocurrió un error inesperado.')
     },
   )
-})
-
-describe('esErrorDeDatos', () => {
-  it('reconoce los errores de referencia que lanza la capa de datos', () => {
-    expect(esErrorDeDatos(new Error('Venta desconocida: v1'))).toBe(true)
-    expect(esErrorDeDatos(new Error('Compra desconocida: c1'))).toBe(true)
-  })
-
-  it('un fallo de red no lo es: ese sí tiene caso reintentarlo', () => {
-    expect(esErrorDeDatos(new Error('No hay conexión con el servidor.'))).toBe(false)
-    expect(esErrorDeDatos('cualquier cosa')).toBe(false)
-  })
 })
