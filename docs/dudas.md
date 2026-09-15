@@ -256,21 +256,19 @@ que más se mueven alcanza para empezar.
 
 ---
 
-### 2.4 Centella y Sbagliato: la receta o el costo
+### 2.4 El costeo del cliente, para poder auditarlo
 
-El sistema comparó las dosis de cada cóctel contra el costo que declara el recetario.
-**Dieciséis de dieciocho cuadran dentro del 2%.** Dos no:
+> **Cerrada el 2026-09-14.** Esta duda preguntaba por dos cócteles, Centella y Sbagliato, cuyo
+> costo declarado no cuadraba con sus propias dosis. Ya no aplica: ninguno de los dos existe
+> en el catálogo, porque la carta se alineó a la del POS.
 
-| Cóctel | El recetario dice | Sus dosis dan | Diferencia |
-| --- | --- | --- | --- |
-| Centella | $26.04 | **$20.29** | cobra $5.75 de más |
-| Sbagliato | $43.35 | **$48.91** | cuesta $5.56 más de lo que cree |
+Lo que queda es la necesidad de fondo. El sistema sabe contrastar el costo calculado desde las
+dosis contra el costo que declare el cliente, y marcar las recetas que no cuadran. Hoy esa
+comparación no tiene con qué trabajar: el catálogo del POS **no declara costo de producción**,
+así que `costoDoc` viene en cero para las 34 recetas.
 
-**Sbagliato es el que importa**: se vende en $215 asumiendo un costo de $43.35, pero cuesta
-$48.91. Se está perdiendo margen en cada uno.
-
-**La pregunta:** ¿la receta está bien y el costo mal capturado, o a la receta le falta o le
-sobra un ingrediente?
+**Qué hace falta:** que el cliente entregue su hoja de costeo de la carta actual. En cuanto
+exista, el contraste se enciende solo y vuelve a marcar las que no cuadren.
 
 ---
 
