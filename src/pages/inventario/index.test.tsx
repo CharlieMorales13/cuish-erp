@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { db } from '@/shared/api/db'
+import { bajoMinimo } from '@/entities/insumo'
+import { existencia } from '@/entities/lote'
 import { renderConProviders, screen, within } from '@/shared/test/render'
 import InventarioPage from './index'
 
@@ -52,6 +54,33 @@ describe('<InventarioPage>', () => {
 
     const mezcal = await filaDe('Espadín Joven')
     expect(within(mezcal).getByText('Bajo mínimo')).toBeInTheDocument()
+  })
+
+  it('en el mínimo exacto, el contador y la fila dicen lo mismo', async () => {
+    // La regla vive en `bajoMinimo`. Cuando la pantalla la reimplementaba, el badge de la
+    // fila decía "Bajo mínimo" y el contador de arriba no la contaba: la misma pantalla se
+    // contradecía justo en el umbral.
+    const insumo = db.insumos.find((i) => i.id === 'INS-01')!
+    db.lotes = db.lotes.filter((l) => l.insumoId !== 'INS-01')
+    db.lotes.push({
+      id: 'L-min',
+      insumoId: 'INS-01',
+      estado: 'abierta',
+      restante: insumo.min,
+      inicial: insumo.min,
+      recibido: '2026-01-01',
+      costoUnitario: insumo.costoUnitario,
+    })
+
+    const esperados = db.insumos.filter((i) => bajoMinimo(existencia(db.lotes, i.id), i)).length
+
+    renderConProviders(<InventarioPage />)
+
+    const fila = await filaDe('Espadín Joven')
+    expect(within(fila).getByText('Bajo mínimo')).toBeInTheDocument()
+
+    const aviso = await screen.findByText(/por debajo de la existencia mínima/)
+    expect(aviso).toHaveTextContent(new RegExp(`^${esperados} insumos? `))
   })
 
   it('avisa cuántos insumos están por debajo del mínimo', async () => {

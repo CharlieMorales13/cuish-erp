@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Aviso, Badge, Button, Cargando, DataTable, Page, type Columna } from '@/shared/ui'
+import { Aviso, Badge, Button, EstadoConsulta, DataTable, Page, type Columna } from '@/shared/ui'
 import { money, pct } from '@/shared/lib'
 import type { Receta } from '@/shared/api/contracts'
 import { useInsumosById } from '@/entities/insumo'
@@ -7,7 +7,8 @@ import { DESVIO_TOLERADO, costoReceta, desvioCosto, margen, useRecetas } from '@
 import { ModalEditarReceta, recetaVacia } from '@/features/editar-receta'
 
 export default function RecetasPage() {
-  const { data: recetas } = useRecetas()
+  const consultaRecetas = useRecetas()
+  const recetas = consultaRecetas.data
   const insumos = useInsumosById()
   const [editando, setEditando] = useState<Receta | null>(null)
 
@@ -81,7 +82,8 @@ export default function RecetasPage() {
     [costo],
   )
 
-  if (!recetas || Object.keys(insumos).length === 0) return <Cargando />
+  if (!recetas || Object.keys(insumos).length === 0)
+    return <EstadoConsulta consultas={[consultaRecetas]} />
 
   const desviadas = recetas.filter((r) => desvioCosto(costo(r), r.costoDoc) > DESVIO_TOLERADO)
 

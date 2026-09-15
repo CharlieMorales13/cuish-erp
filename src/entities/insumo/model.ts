@@ -4,12 +4,15 @@ export type EstadoExistencia = 'Agotado' | 'Bajo mínimo' | 'Sobre máximo' | 'E
 
 export function estadoExistencia(total: number, insumo: Insumo): EstadoExistencia {
   if (total <= 0) return 'Agotado'
-  if (total < insumo.min) return 'Bajo mínimo'
+  // `<=`, no `<`: es la misma regla que usa la vista `vw_existencia_producto` de la base
+  // compartida. Con `<` el POS diría "bajo mínimo" y el ERP "en rango" para el mismo número.
+  if (total <= insumo.min) return 'Bajo mínimo'
   if (total > insumo.max) return 'Sobre máximo'
   return 'En rango'
 }
 
-export const bajoMinimo = (e: Existencia | undefined, insumo: Insumo) => !!e && e.total < insumo.min
+export const bajoMinimo = (e: Existencia | undefined, insumo: Insumo) =>
+  !!e && e.total <= insumo.min
 
 /** El costo unitario nunca se captura: siempre se deriva de la presentación de compra. */
 export const costoUnitario = (costoCompra: number, presentacion: number) =>

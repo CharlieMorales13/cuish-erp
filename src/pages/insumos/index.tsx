@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Badge, Button, Cargando, DataTable, Page, type Columna } from '@/shared/ui'
+import { Badge, Button, EstadoConsulta, DataTable, Page, type Columna } from '@/shared/ui'
 import { cantidad, money, moneyFino } from '@/shared/lib'
 import type { Insumo } from '@/shared/api/contracts'
 import { rendimiento, useInsumos } from '@/entities/insumo'
@@ -10,7 +10,8 @@ import { ModalEditarInsumo, insumoVacio } from '@/features/editar-insumo'
 const esDestiladoEnMl = (i: Insumo) => i.esBotella && i.unidad === 'ml'
 
 export default function InsumosPage() {
-  const { data: insumos } = useInsumos()
+  const consultaInsumos = useInsumos()
+  const insumos = consultaInsumos.data
   const [editando, setEditando] = useState<Insumo | null>(null)
 
   const columnas = useMemo<Array<Columna<Insumo>>>(
@@ -89,7 +90,7 @@ export default function InsumosPage() {
     [],
   )
 
-  if (!insumos) return <Cargando />
+  if (!insumos) return <EstadoConsulta consultas={[consultaInsumos]} />
 
   return (
     <Page

@@ -89,11 +89,3 @@ export function Stat({
     </Card>
   )
 }
-
-export function Cargando() {
-  return (
-    <div role="status" aria-live="polite" className="py-16 text-center text-sm text-zinc-500">
-      Cargando…
-    </div>
-  )
-}

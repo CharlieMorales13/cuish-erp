@@ -28,11 +28,17 @@ lado.
 > Actualizado el 2026-09-12 tras revisar la base viva (proyecto `dbcuish`). Dos dudas se
 > cerraron solas y apareció una mucho más grande.
 
-### 1.1 El POS y el ERP están modelando negocios distintos
+### 1.1 El catálogo cargado no coincide con el modelo de inventario
 
-**Es el hallazgo más importante del proyecto y hay que resolverlo antes que cualquier otra
-cosa.** Al conectarse a la base compartida, el catálogo cargado no se parece al que construyó
-el ERP, y tampoco al documento de costeo que entregó el cliente.
+> **Corregido el 2026-09-13.** La primera versión de este punto decía que el POS y el ERP
+> modelaban negocios distintos. Es más acotado que eso: **el esquema sí soporta el modelo del
+> ERP**. Existen la tabla `lote` con marbete y caducidad, el enum `estado_lote` con
+> `ABIERTO`/`CERRADO`, el tipo `BOTELLA_COPEO`, la unidad `oz`, las banderas `controla_lote` y
+> `controla_caducidad`, la receta versionada y hasta una vista `vw_existencia_lote` que suma
+> el kardex por lote. El diseño está. Lo que no coincide es **el dato cargado**.
+
+Al conectarse a la base compartida, el catálogo cargado no se parece al que construyó el ERP,
+y tampoco al documento de costeo que entregó el cliente.
 
 | | ERP (lo que construimos) | Base compartida (lo que cargó el POS) |
 | --- | --- | --- |
@@ -47,7 +53,16 @@ el ERP, y tampoco al documento de costeo que entregó el cliente.
 | Presentaciones de compra | una por insumo | tabla `producto_presentacion_compra` **vacía** |
 | Proveedores y compras | implementados | tablas **vacías** |
 
-**Qué implica, en concreto:**
+**El esquema ya resolvió dos cosas bien, y conviene adoptarlas:**
+
+- **La existencia se deriva del kardex, no se guarda.** Las vistas `vw_existencia_producto` y
+  `vw_existencia_lote` suman `movimiento_inventario`. Es el diseño correcto y es lo que el ERP
+  tiene que adoptar en el sprint de la API.
+- **La alerta de bajo mínimo ya está definida** en `vw_existencia_producto` como
+  `existencia <= stock_minimo`. El ERP usaba `<`, lo que hacía que en el mínimo exacto el POS
+  dijera "bajo mínimo" y el ERP "en rango". Ya se alineó al de la base.
+
+**Qué implica el dato cargado, en concreto:**
 
 - **Sin insumos y sin recetas no hay BOM.** El descuento por explosión de receta (RF-ERP-08)
   no tiene de dónde descontar: no existe ningún producto que sea ingrediente de otro.
@@ -66,14 +81,12 @@ recetas planas y conviene adoptarlo.
 
 **Lo que hay que decidir, y no es una decisión técnica:**
 
-1. **¿Cuál es el catálogo real del negocio?** ¿El del documento de costeo que nos entregaron,
-   el que cargó el POS, o ninguno de los dos porque ambos son datos de prueba?
-2. **¿El inventario se lleva por lote y por mililitro, o por pieza?** Es la diferencia entre un
-   ERP de inventario de bar y un contador de existencias. Todos los requisitos del alcance
-   asumen lo primero.
-3. **¿Quién carga el catálogo definitivo y cuándo?**
-
-**Hasta que esto se cierre, cualquier trabajo de API se construye sobre arena.**
+1. **¿El catálogo cargado es el definitivo o es dato de prueba?** El ERP ya se alineó a él,
+   pero si son productos de ejemplo, hay que cargar los reales.
+2. **¿Se encienden `controla_lote` y `controla_caducidad`?** Están apagados en los 44
+   productos. Sin eso se caen cuatro requisitos del alcance, aunque el esquema los soporte.
+3. **¿Quién marca qué productos son insumo y carga las recetas?** Son las dos piezas que hoy
+   no existen en la base y sin las cuales no hay nada que descontar.
 
 ---
 
@@ -243,21 +256,19 @@ que más se mueven alcanza para empezar.
 
 ---
 
-### 2.4 Centella y Sbagliato: la receta o el costo
+### 2.4 El costeo del cliente, para poder auditarlo
 
-El sistema comparó las dosis de cada cóctel contra el costo que declara el recetario.
-**Dieciséis de dieciocho cuadran dentro del 2%.** Dos no:
+> **Cerrada el 2026-09-14.** Esta duda preguntaba por dos cócteles, Centella y Sbagliato, cuyo
+> costo declarado no cuadraba con sus propias dosis. Ya no aplica: ninguno de los dos existe
+> en el catálogo, porque la carta se alineó a la del POS.
 
-| Cóctel | El recetario dice | Sus dosis dan | Diferencia |
-| --- | --- | --- | --- |
-| Centella | $26.04 | **$20.29** | cobra $5.75 de más |
-| Sbagliato | $43.35 | **$48.91** | cuesta $5.56 más de lo que cree |
+Lo que queda es la necesidad de fondo. El sistema sabe contrastar el costo calculado desde las
+dosis contra el costo que declare el cliente, y marcar las recetas que no cuadran. Hoy esa
+comparación no tiene con qué trabajar: el catálogo del POS **no declara costo de producción**,
+así que `costoDoc` viene en cero para las 34 recetas.
 
-**Sbagliato es el que importa**: se vende en $215 asumiendo un costo de $43.35, pero cuesta
-$48.91. Se está perdiendo margen en cada uno.
-
-**La pregunta:** ¿la receta está bien y el costo mal capturado, o a la receta le falta o le
-sobra un ingrediente?
+**Qué hace falta:** que el cliente entregue su hoja de costeo de la carta actual. En cuanto
+exista, el contraste se enciende solo y vuelve a marcar las que no cuadren.
 
 ---
 

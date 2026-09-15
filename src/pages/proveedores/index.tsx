@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Badge, Button, Cargando, DataTable, Page, type Columna } from '@/shared/ui'
+import { Badge, Button, EstadoConsulta, DataTable, Page, type Columna } from '@/shared/ui'
 import type { Proveedor } from '@/shared/api/contracts'
 import { useProveedores } from '@/entities/proveedor'
 import { ModalEditarProveedor, proveedorVacio } from '@/features/editar-proveedor'
 
 export default function ProveedoresPage() {
-  const { data: proveedores } = useProveedores()
+  const consultaProveedores = useProveedores()
+  const proveedores = consultaProveedores.data
   const [editando, setEditando] = useState<Proveedor | null>(null)
 
   const columnas = useMemo<Array<Columna<Proveedor>>>(
@@ -35,7 +36,7 @@ export default function ProveedoresPage() {
     [],
   )
 
-  if (!proveedores) return <Cargando />
+  if (!proveedores) return <EstadoConsulta consultas={[consultaProveedores]} />
 
   return (
     <Page

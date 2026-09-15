@@ -36,11 +36,39 @@ export let db = semilla()
 export function resetDb() {
   db = semilla()
   secuencia = 0
+  fallaPendiente = null
+}
+
+/**
+ * Falla que el servidor falso devolverá en la siguiente llamada.
+ *
+ * El backend en memoria nunca se cae, y por eso el camino de error es fácil de dejar sin
+ * escribir: se ve todo verde hasta el día que entra la API real. Esto permite provocar el
+ * fallo a propósito, tanto en las pruebas como para enseñar el comportamiento en una demo.
+ */
+let fallaPendiente: string | null = null
+
+export const simularFalla = (mensaje = 'No hay conexión con el servidor.') => {
+  fallaPendiente = mensaje
+}
+
+export const cancelarFalla = () => {
+  fallaPendiente = null
 }
 
 /** Latencia simulada. Clona la respuesta para que nadie mute la "base" por referencia. */
 export const delay = <T>(data: T, ms = 120): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(structuredClone(data)), ms))
+  new Promise((resolve, reject) =>
+    setTimeout(() => {
+      if (fallaPendiente !== null) {
+        const mensaje = fallaPendiente
+        fallaPendiente = null
+        reject(new Error(mensaje))
+        return
+      }
+      resolve(structuredClone(data))
+    }, ms),
+  )
 
 let secuencia = 0
 

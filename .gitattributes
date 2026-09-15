@@ -1,0 +1,8 @@
+# Finales de línea LF en todos lados. Sin esto, Windows revisa el código con CRLF,
+# Prettier espera LF y `format:check` pasa en el CI de Linux pero truena en local.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.woff binary
+*.woff2 binary

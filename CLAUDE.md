@@ -99,12 +99,36 @@ Hooks de git (husky), no los brinques:
 - `commit-msg`: commitlint. **Conventional Commits obligatorios.**
 - `pre-push`: typecheck + tests.
 
+Además, GitHub Actions corre tipos, lint, formato, cobertura y build en cada pull request. Los
+hooks se brincan con `--no-verify`; el CI no.
+
 Formato de commit: `tipo(scope): descripción`. El scope conviene que sea la rebanada de FSD:
 `feat(entities/lote):`, `fix(features/aplicar-venta):`, `test(shared/ui):`.
 
+## Manejo de errores
+
+Tres caminos, cada uno con un solo dueño. **No los mezcles ni los repitas por pantalla.**
+
+| Qué falló                                  | Quién lo muestra                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------ |
+| Una consulta, y la pantalla no tiene datos | `EstadoConsulta` en el early return de la pantalla                 |
+| Una acción (mutación)                      | El aviso global. Lo reporta `MutationCache` en `app/providers.tsx` |
+| El render mismo                            | `ErrorBoundary` en `app/index.tsx`                                 |
+
+Reglas:
+
+- **Nunca escribas `if (!data) return <Cargando />`.** Ese patrón convierte cualquier error de
+  red en un "Cargando…" eterno. Usa `<EstadoConsulta consultas={[...]} />`, que decide entre
+  cargando y error y ofrece reintentar.
+- Las consultas reintentan dos veces; **las mutaciones no reintentan nunca**, porque no son
+  idempotentes y descontarían inventario dos veces.
+- Un botón no tiene que manejar su propio error: `useMutacionInvalidante` ya lo reporta.
+- Para probar o demostrar el camino de error, `simularFalla()` de `shared/api/db` hace que la
+  siguiente llamada al servidor falso truene.
+
 ## Pruebas
 
-`vitest` + `@testing-library/react` + jsdom. 248 pruebas.
+`vitest` + `@testing-library/react` + jsdom. 284 pruebas.
 
 - `resetDb()` corre antes de cada prueba: siempre se parte de la misma semilla.
 - Componentes: `renderConProviders` de `@/shared/test/render` (QueryClient + router).

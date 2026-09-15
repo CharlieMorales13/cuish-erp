@@ -29,7 +29,8 @@ describe('estadoExistencia', () => {
     [0, 'Agotado'],
     [-120, 'Agotado'],
     [1499, 'Bajo mínimo'],
-    [1500, 'En rango'],
+    [1500, 'Bajo mínimo'],
+    [1501, 'En rango'],
     [6000, 'En rango'],
     [6001, 'Sobre máximo'],
   ])('con %d de existencia el estado es %s', (total, esperado) => {
@@ -42,9 +43,9 @@ describe('bajoMinimo', () => {
     expect(bajoMinimo(undefined, insumo())).toBe(false)
   })
 
-  it('el mínimo exacto todavía no es bajo mínimo', () => {
-    expect(bajoMinimo(ex(1500), insumo())).toBe(false)
-    expect(bajoMinimo(ex(1499), insumo())).toBe(true)
+  it('el mínimo exacto ya cuenta como bajo mínimo, igual que la vista de la base', () => {
+    expect(bajoMinimo(ex(1500), insumo())).toBe(true)
+    expect(bajoMinimo(ex(1501), insumo())).toBe(false)
   })
 })
 

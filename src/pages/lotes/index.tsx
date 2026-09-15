@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Badge, Button, Cargando, DataTable, Page, type Columna } from '@/shared/ui'
+import { Badge, Button, EstadoConsulta, DataTable, Page, type Columna } from '@/shared/ui'
 import { cantidad, diasParaCaducar, fecha } from '@/shared/lib'
 import type { Lote } from '@/shared/api/contracts'
 import { EstadoLoteBadge, useLotes } from '@/entities/lote'
@@ -8,7 +8,8 @@ import { BotonAbrirBotella } from '@/features/abrir-botella'
 import { ModalRecibirMercancia } from '@/features/recibir-mercancia'
 
 export default function LotesPage() {
-  const { data: lotes } = useLotes()
+  const consultaLotes = useLotes()
+  const lotes = consultaLotes.data
   const insumos = useInsumosById()
   const [alta, setAlta] = useState(false)
 
@@ -89,7 +90,7 @@ export default function LotesPage() {
     [insumos],
   )
 
-  if (!lotes) return <Cargando />
+  if (!lotes) return <EstadoConsulta consultas={[consultaLotes]} />
 
   return (
     <Page

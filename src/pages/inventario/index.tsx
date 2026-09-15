@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
-import { Aviso, Badge, Cargando, DataTable, Page, type Columna, type Tono } from '@/shared/ui'
+import { Aviso, Badge, EstadoConsulta, DataTable, Page, type Columna, type Tono } from '@/shared/ui'
 import { cantidad, money } from '@/shared/lib'
 import type { Insumo } from '@/shared/api/contracts'
 import {
+  bajoMinimo,
   estadoExistencia,
   useInsumos,
   valorInventario,
@@ -18,8 +19,10 @@ const TONO: Record<EstadoExistencia, Tono> = {
 }
 
 export default function InventarioPage() {
-  const { data: insumos } = useInsumos()
-  const { data: existencias } = useExistencias()
+  const consultaInsumos = useInsumos()
+  const consultaExistencias = useExistencias()
+  const insumos = consultaInsumos.data
+  const existencias = consultaExistencias.data
 
   const columnas = useMemo<Array<Columna<Insumo>>>(() => {
     if (!existencias) return []
@@ -91,9 +94,10 @@ export default function InventarioPage() {
     ]
   }, [existencias])
 
-  if (!insumos || !existencias) return <Cargando />
+  if (!insumos || !existencias)
+    return <EstadoConsulta consultas={[consultaInsumos, consultaExistencias]} />
 
-  const bajos = insumos.filter((i) => existencias[i.id].total < i.min).length
+  const bajos = insumos.filter((i) => bajoMinimo(existencias[i.id], i)).length
 
   return (
     <Page

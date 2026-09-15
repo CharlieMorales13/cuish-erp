@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Aviso, Cargando, Page, Stat } from '@/shared/ui'
+import { Aviso, EstadoConsulta, Page, Stat } from '@/shared/ui'
 import { money } from '@/shared/lib'
 import { useExistencias, useLotes } from '@/entities/lote'
-import { useInsumos, valorInventario } from '@/entities/insumo'
+import { bajoMinimo, useInsumos, valorInventario } from '@/entities/insumo'
 import { acumularPorInsumo, useMovimientos } from '@/entities/movimiento'
 import { pendientesDeAplicar, useVentas } from '@/entities/venta'
 import { GraficaCosto, type BarraCosto } from '@/widgets/grafica-costo'
@@ -15,11 +15,16 @@ import {
 } from '@/widgets/alertas-inventario'
 
 export default function DashboardPage() {
-  const { data: insumos } = useInsumos()
-  const { data: existencias } = useExistencias()
-  const { data: lotes } = useLotes()
-  const { data: movimientos } = useMovimientos()
-  const { data: ventas } = useVentas()
+  const consultaInsumos = useInsumos()
+  const consultaExistencias = useExistencias()
+  const consultaLotes = useLotes()
+  const consultaMovimientos = useMovimientos()
+  const consultaVentas = useVentas()
+  const insumos = consultaInsumos.data
+  const existencias = consultaExistencias.data
+  const lotes = consultaLotes.data
+  const movimientos = consultaMovimientos.data
+  const ventas = consultaVentas.data
 
   const resumen = useMemo(() => {
     if (!insumos || !existencias || !lotes || !movimientos) return null
@@ -38,7 +43,7 @@ export default function DashboardPage() {
 
     return {
       valor: valorInventario(insumos, existencias),
-      bajos: insumos.filter((i) => existencias[i.id].total < i.min),
+      bajos: insumos.filter((i) => bajoMinimo(existencias[i.id], i)),
       porCaducar: lotesPorCaducar(lotes),
       consumo: top(acumularPorInsumo(movimientos, 'venta')),
       merma: top(acumularPorInsumo(movimientos, 'merma')),
@@ -48,7 +53,18 @@ export default function DashboardPage() {
 
   const pendientes = pendientesDeAplicar(ventas ?? [])
 
-  if (!resumen || !insumos || !existencias) return <Cargando />
+  if (!resumen || !insumos || !existencias)
+    return (
+      <EstadoConsulta
+        consultas={[
+          consultaInsumos,
+          consultaExistencias,
+          consultaLotes,
+          consultaMovimientos,
+          consultaVentas,
+        ]}
+      />
+    )
 
   return (
     <Page titulo="Dashboard" descripcion="Estado del inventario del bar, un solo almacén.">
